@@ -95,6 +95,11 @@ struct BrainView: View {
                     .foregroundStyle(isCurrent ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
                     .frame(width: 32)
                 HStack(spacing: 6) {
+                    if BrainCatalog.isCloud(model.id) {
+                        Image(systemName: "cloud.fill")
+                            .font(.caption)
+                            .foregroundStyle(.tint)
+                    }
                     Text(model.name).font(.subheadline.weight(.semibold))
                     if model.recommended {
                         Image(systemName: "star.fill")

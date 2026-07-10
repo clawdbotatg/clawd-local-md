@@ -29,15 +29,30 @@ struct BrainModel: Identifiable, Equatable, Hashable {
 }
 
 enum BrainCatalog {
-    /// Ordered biggest-brain-first (roughly best → smallest). The recommended
-    /// one is the default and sits at the top.
+    /// The cloud brain (id sentinel — not a Hugging Face repo). No download,
+    /// needs internet; routed to `CloudEngine` instead of MLX.
+    static let cloudID = "cloud"
+
+    static let cloud = BrainModel(
+        id: cloudID,
+        name: "Cloud",
+        sizeText: "no download",
+        brains: 5,
+        recommended: true
+    )
+
+    static func isCloud(_ id: String) -> Bool { id == cloudID }
+
+    /// Cloud first (default, instant, needs internet), then the on-device
+    /// brains you can download to work offline — biggest/best first.
     static let all: [BrainModel] = [
+        cloud,
         BrainModel(
             id: "lmstudio-community/Qwen3-VL-4B-Instruct-MLX-4bit",
             name: "Qwen3-VL 4B",
             sizeText: "~2.7 GB",
             brains: 4,
-            recommended: true
+            recommended: false
         ),
         BrainModel(
             id: "mlx-community/gemma-3-4b-it-qat-4bit",
@@ -69,8 +84,7 @@ enum BrainCatalog {
         ),
     ]
 
-    static let defaultID: String =
-        all.first(where: \.recommended)?.id ?? all[0].id
+    static let defaultID: String = cloudID
 
     static func model(for id: String) -> BrainModel {
         all.first { $0.id == id } ?? all[0]

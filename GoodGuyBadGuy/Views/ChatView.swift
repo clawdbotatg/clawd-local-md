@@ -216,14 +216,19 @@ struct ChatView: View {
         VStack(spacing: 12) {
             Spacer()
             ProgressView()
+            let isCloud = BrainCatalog.isCloud(store.currentModelID)
             Text(
-                store.isDownloaded(store.currentModelID)
-                    ? "Waking up \(store.modelName)…"
-                    : "Downloading \(store.modelName)…"
+                isCloud
+                    ? "Connecting to the cloud…"
+                    : store.isDownloaded(store.currentModelID)
+                        ? "Waking up \(store.modelName)…"
+                        : "Downloading \(store.modelName)…"
             )
             .font(.headline)
             Text(
-                "First time takes a few minutes on Wi-Fi. After that it's instant and works with no signal."
+                isCloud
+                    ? "Instant answers over the internet — no download. Add a local brain to work offline."
+                    : "First time takes a few minutes on Wi-Fi. After that it's instant and works with no signal."
             )
             .font(.footnote)
             .foregroundStyle(.secondary)

@@ -24,7 +24,13 @@ final class ChatStore {
     private(set) var currentModelID: String
     private(set) var downloadedModelIDs: Set<String>
 
-    private let engine: LLMEngine
+    /// Two backends: the cloud classifier (default) and the on-device model.
+    /// `engine` is whichever the selected brain routes to.
+    private let cloudEngine: LLMEngine = CloudEngine()
+    private let localEngine: LLMEngine
+    private var engine: LLMEngine {
+        BrainCatalog.isCloud(currentModelID) ? cloudEngine : localEngine
+    }
     private var generationTask: Task<Void, Never>?
 
     /// Raw fraction reported by the loader, and a time-based sweep over it.
@@ -46,11 +52,13 @@ final class ChatStore {
         downloadedModelIDs = Set(defaults.stringArray(forKey: Self.downloadedKey) ?? [])
 
         #if targetEnvironment(simulator)
-        engine = MockEngine()
+        localEngine = MockEngine()
         #else
-        engine = MLXEngine()
+        localEngine = MLXEngine()
         #endif
-        engine.setModel(currentModelID)
+        if !BrainCatalog.isCloud(currentModelID) {
+            localEngine.setModel(currentModelID)
+        }
     }
 
     var availableModels: [BrainModel] { BrainCatalog.all }
@@ -125,7 +133,10 @@ final class ChatStore {
         return false
     }
 
-    func isDownloaded(_ id: String) -> Bool { downloadedModelIDs.contains(id) }
+    /// Cloud needs no download; treat it as always "ready to use".
+    func isDownloaded(_ id: String) -> Bool {
+        BrainCatalog.isCloud(id) || downloadedModelIDs.contains(id)
+    }
 
     private func markDownloaded(_ id: String) {
         downloadedModelIDs.insert(id)
