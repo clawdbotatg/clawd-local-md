@@ -114,6 +114,26 @@ enum DangerTable {
             )
         }
 
+        // Dangerous look-alike: the ID names BOTH a dangerous species and a
+        // harmless one (e.g. "coral snake or scarlet kingsnake" — a real
+        // venomous coral snake was called GOOD until this rule existed). A
+        // photo can't resolve it, so the safe answer is CAUTION naming the
+        // dangerous candidate. Never let the harmless mimic win on specificity.
+        let matches = allMatches(in: name)
+        if isAmbiguous(name),
+            matches.contains(where: { $0.verdict == "bad" }),
+            matches.contains(where: { $0.verdict == "good" }),
+            let bad = matches.first(where: { $0.verdict == "bad" })
+        {
+            let dangerName = bad.names
+                .filter { contains(name, word: $0) }
+                .max(by: { $0.count < $1.count }) ?? bad.names[0]
+            return compose(
+                .caution,
+                "Could be a \(dangerName) (dangerous) or a harmless look-alike — a photo can't tell them apart. Keep your distance and don't touch it."
+            )
+        }
+
         if let best = lookup(name: name) {
             // A confirmed dangerous match still stands when the model hedged;
             // but a hedged GOOD GUY is downgraded — we may be looking at the
@@ -189,6 +209,27 @@ enum DangerTable {
     /// have. Specificity-first keeps the safety bias where it belongs: a name
     /// citing two species of equal specificity ("milk snake, a coral snake
     /// mimic") still resolves to the dangerous one.
+    /// Every entry whose alias appears in the text (used for look-alike
+    /// conflict detection).
+    private static func allMatches(in text: String) -> [DangerEntry] {
+        entries.filter { entry in entry.names.contains { contains(text, word: $0) } }
+    }
+
+    /// Whether the text names alternatives ("coral snake OR scarlet kingsnake")
+    /// rather than one species that merely contains a shared word ("wolf
+    /// spider"). Only then is a bad+good match a genuine look-alike.
+    private static func isAmbiguous(_ text: String) -> Bool {
+        let lower = text.lowercased()
+        // Whole-word markers.
+        let words = ["or", "possibly", "mimic", "either", "vs", "uncertain"]
+        if words.contains(where: {
+            lower.range(of: "\\b\($0)\\b", options: .regularExpression) != nil
+        }) { return true }
+        // Substring markers (phrases / punctuation).
+        let phrases = ["look-alike", "lookalike", "could be", "not sure", "/", "?"]
+        return phrases.contains { lower.contains($0) }
+    }
+
     private static func bestMatch(in text: String) -> (entry: DangerEntry, specificity: Int)? {
         var best: (entry: DangerEntry, specificity: Int)?
         for entry in entries {

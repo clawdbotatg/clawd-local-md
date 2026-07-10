@@ -87,10 +87,26 @@ def lookup(entries, name):
     return best[0] if best else None
 
 
+def all_matches(entries, name):
+    return [e for e in entries if any(re.search(_pattern(n), name, re.I) for n in e["names"])]
+
+
+_AMBIGUOUS_RE = re.compile(
+    r"\bor\b|/|possibly|mimic|look[- ]?alike|either|\bvs\b|could be|not sure|uncertain|\?",
+    re.I,
+)
+
+
 def verdict(entries, name, category=None, hedged=False):
     category = category if category in CATEGORIES else "other"
     if not name:
         return "CAUTION"
+    # Dangerous look-alike: the ID names alternatives ("X or Y"), one dangerous
+    # and one harmless. Not "wolf spider" (one species containing "wolf").
+    if _AMBIGUOUS_RE.search(name):
+        present = {m["verdict"] for m in all_matches(entries, name)}
+        if "bad" in present and "good" in present:
+            return "CAUTION"
     best = lookup(entries, name)
     if best:
         if hedged and best["verdict"] == "good":
@@ -120,7 +136,17 @@ CASES = [
     ("Easter lilies", "plant", "BAD", "plural of a multi-word alias"),
     ("Peace lily", "plant", "CAUTION", "not a true lily: specificity must beat severity"),
     ("Wolf spider", "spider", "GOOD", "must not match the 'wolf' mammal entry"),
-    ("Milk snake, a coral snake mimic", "snake", "BAD", "equal specificity ties break toward danger"),
+    # THE look-alike test: a real venomous coral snake photo made the cloud
+    # say "coral snake or scarlet kingsnake" and the table called it GOOD GUY.
+    # Naming a deadly species and its harmless mimic must be CAUTION, never GOOD.
+    ("coral snake or scarlet kingsnake (Micrurus sp. or Lampropeltis elapsoides)", "snake",
+     "CAUTION", "flagship: deadly species + harmless mimic -> caution, never good"),
+    ("Milk snake, a coral snake mimic", "snake", "CAUTION",
+     "look-alike: dangerous + harmless candidates -> caution, name the dangerous one"),
+    ("Eastern coral snake (Micrurus fulvius)", "snake", "BAD",
+     "an unambiguous coral snake is still BAD"),
+    ("Scarlet kingsnake (Lampropeltis elapsoides)", "snake", "GOOD",
+     "an unambiguous harmless mimic is GOOD"),
     ("Elephant near a plant", "mammal", "GOOD", "'ant' must not fire inside other words"),
 
     # Naming-pass hygiene (the model parroting or hedging).

@@ -47,6 +47,29 @@ def _pattern(alias):
     return r"\b" + body + r"\b"
 
 
+# Markers that signal the ID is naming alternatives, not one specific species.
+# "coral snake OR scarlet kingsnake" is ambiguous; "wolf spider" is not (it's
+# one species that merely contains the word "wolf").
+_AMBIGUOUS_RE = re.compile(
+    r"\bor\b|/|possibly|mimic|look[- ]?alike|either|\bvs\b|could be|not sure|uncertain|\?",
+    re.I,
+)
+
+
+def _ambiguous(name):
+    return bool(_AMBIGUOUS_RE.search(name))
+
+
+def all_matches(name):
+    """Every entry whose alias appears in the name."""
+    if not name:
+        return []
+    return [
+        entry for entry in ENTRIES
+        if any(re.search(_pattern(n), name, re.I) for n in entry["names"])
+    ]
+
+
 def lookup(name):
     """The entry a name resolves to. Most specific alias wins; severity ties."""
     if not name:
@@ -74,6 +97,25 @@ def resolve(name, category, model_verdict=None, model_note=None, hedged=False):
     Returns (verdict, note, source) where source is "table" or "model".
     """
     category = category if category in CATEGORIES else "other"
+
+    # Dangerous look-alike: the identification names BOTH a dangerous species
+    # and a harmless one (e.g. "coral snake or scarlet kingsnake" — a real
+    # venomous coral snake was called GOOD until this rule existed). A photo
+    # can't resolve it, so the honest, safe answer is CAUTION naming both.
+    # Never let the harmless mimic win just because its name is more specific.
+    matches = all_matches(name)
+    verdicts_present = {m["verdict"] for m in matches}
+    if _ambiguous(name) and "bad" in verdicts_present and "good" in verdicts_present:
+        bad = next(m for m in matches if m["verdict"] == "bad")
+        # Name the dangerous candidate by whichever of its aliases actually
+        # appeared, so the note reads naturally ("a coral snake").
+        hits = [n for n in bad["names"] if re.search(_pattern(n), name, re.I)]
+        danger_name = max(hits, key=len) if hits else bad["names"][0]
+        note = (
+            f"Could be a {danger_name} (dangerous) or a harmless look-alike — "
+            f"a photo can't tell them apart. Keep your distance and don't touch it."
+        )
+        return "caution", note, "table"
 
     entry = lookup(name)
     if entry:
