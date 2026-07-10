@@ -114,9 +114,12 @@ Identical to the parent — same device, same team, same flags:
 - **Device build**: `xcodebuild -project GoodGuyBadGuy.xcodeproj -scheme
   GoodGuyBadGuy -destination 'generic/platform=iOS' -derivedDataPath build
   -skipPackagePluginValidation -skipMacroValidation -allowProvisioningUpdates
-  DEVELOPMENT_TEAM=XX7QP5899Z build`
+  DEVELOPMENT_TEAM=XX7QP5899Z GGBG_CLOUD_TOKEN=ggbg_… build`
   (the two -skip flags are required headless: mlx-swift's CudaBuild plugin and
-  the `#huggingFaceLoadModelContainer` macro can't show their trust prompts).
+  the `#huggingFaceLoadModelContainer` macro can't show their trust prompts.
+  `GGBG_CLOUD_TOKEN` injects the cloud service token into Info.plist — it is
+  never in git; omit it and the cloud brain just can't reach the service. The
+  live token is in the box's `server/.env`.).
 - **Install + launch**: `xcrun devicectl device install app --device
   8B053FBC-B638-548F-B045-F5DDE25D3BDD <path>.app` then
   `… device process launch --terminate-existing --device <udid>

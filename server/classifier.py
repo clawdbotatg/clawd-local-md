@@ -55,6 +55,29 @@ MAX_IMAGE_BYTES = 12 * 1024 * 1024
 # Protect the subscription: cap concurrent claude calls.
 _claude_slots = threading.Semaphore(int(os.environ.get("GGBG_CONCURRENCY", "3")))
 
+# Rate limits (the token is a soft gate; a leaked one shouldn't drain the
+# subscription). Fixed 60s windows, per client IP and global.
+RATE_PER_IP = int(os.environ.get("GGBG_RATE_PER_IP", "20"))
+RATE_GLOBAL = int(os.environ.get("GGBG_RATE_GLOBAL", "120"))
+_rate_lock = threading.Lock()
+_rate_hits = {}  # key -> (window_start, count)
+
+
+def _rate_ok(key, limit):
+    now = time.time()
+    with _rate_lock:
+        start, count = _rate_hits.get(key, (now, 0))
+        if now - start >= 60:
+            start, count = now, 0
+        count += 1
+        _rate_hits[key] = (start, count)
+        # Opportunistic cleanup so the dict can't grow unbounded.
+        if len(_rate_hits) > 10000:
+            for k, (s, _c) in list(_rate_hits.items()):
+                if now - s >= 60:
+                    _rate_hits.pop(k, None)
+        return count <= limit
+
 # Cached claude-health flag, refreshed lazily.
 _health = {"claude_alive": None, "checked_at": 0.0}
 _health_lock = threading.Lock()
@@ -269,6 +292,11 @@ class Handler(BaseHTTPRequestHandler):
             return
         if not self._authorized():
             self._json(401, {"error": "bad or missing token"})
+            return
+        client = (self.headers.get("X-Forwarded-For", "") or
+                  self.client_address[0]).split(",")[0].strip()
+        if not _rate_ok("global", RATE_GLOBAL) or not _rate_ok(client, RATE_PER_IP):
+            self._json(429, {"error": "rate limited, slow down"})
             return
         length = int(self.headers.get("Content-Length", "0"))
         if length <= 0 or length > MAX_IMAGE_BYTES:
