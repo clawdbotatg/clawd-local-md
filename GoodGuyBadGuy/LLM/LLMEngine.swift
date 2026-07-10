@@ -36,13 +36,10 @@ final class MockEngine: LLMEngine {
         let reply =
             image != nil
             ? "<think>Mock verdict for the simulator.</think>"
-                + "VERDICT: BAD GUY\n\nBlack widow spider (Latrodectus mactans) — mock reply; "
-                + "the real model needs a device GPU. Glossy black body with a red hourglass "
-                + "on the underside. Keep your distance, and shake out shoes or gloves that "
-                + "sat outside."
-            : "This is the mock simulator engine (MLX needs a real device's GPU). "
-                + "You said: “\(prompt)”. Attach a photo of a critter — on an iPhone the real "
-                + "model answers with a GOOD GUY / BAD GUY / CAUTION verdict."
+                + "VERDICT: BAD GUY\n\nBlack widow (Latrodectus mactans) — mock reply; the "
+                + "real model needs a device GPU. Venomous bite; keep your distance."
+            : "Mock simulator engine (MLX needs a real device's GPU). You said: "
+                + "“\(prompt)”. On an iPhone the real model answers photos with a verdict."
         return AsyncThrowingStream { continuation in
             Task { @MainActor in
                 for word in reply.split(separator: " ", omittingEmptySubsequences: false) {

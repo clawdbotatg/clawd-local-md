@@ -6,7 +6,6 @@ struct ChatView: View {
     @State private var draft = ""
     @State private var speech = SpeechRecognizer()
     @State private var draftBeforeDictation = ""
-    @State private var pendingImage: UIImage?
     @State private var showCamera = false
     @State private var showPhotoPicker = false
     @State private var photoItem: PhotosPickerItem?
@@ -19,7 +18,9 @@ struct ChatView: View {
                 switch store.modelState {
                 case .ready:
                     messageList
-                    composer
+                    // Image-first: no composer until the first verdict is in;
+                    // then it appears for follow-up questions.
+                    if !store.messages.isEmpty { composer }
                 case .idle, .downloading:
                     loadingScreen
                 case .failed(let message):
@@ -54,7 +55,8 @@ struct ChatView: View {
             }
         }
         .fullScreenCover(isPresented: $showCamera) {
-            CameraPicker { pendingImage = $0 }
+            // A captured photo IS the question — send it immediately.
+            CameraPicker { store.send("", image: $0) }
                 .ignoresSafeArea()
         }
         .photosPicker(isPresented: $showPhotoPicker, selection: $photoItem, matching: .images)
@@ -64,7 +66,7 @@ struct ChatView: View {
                 if let data = try? await photoItem.loadTransferable(type: Data.self),
                     let image = UIImage(data: data)
                 {
-                    pendingImage = image
+                    store.send("", image: image)
                 }
                 self.photoItem = nil
             }
@@ -101,7 +103,7 @@ struct ChatView: View {
             Text("Good guy or bad guy?")
                 .font(.title2.bold())
             Text(
-                "Found a snake, spider, bug, plant, or mushroom? Snap a photo and the on-device model tells you if it's dangerous — works with zero bars."
+                "Found a snake, spider, bug, plant, or mushroom? Snap a photo — no typing needed. The on-device model says what it is and whether it's dangerous, with zero bars."
             )
             .font(.footnote)
             .foregroundStyle(.secondary)
@@ -128,31 +130,9 @@ struct ChatView: View {
     }
 
     private var composer: some View {
-        VStack(spacing: 6) {
-            if let pendingImage {
-                HStack {
-                    Image(uiImage: pendingImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 64, height: 64)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .overlay(alignment: .topTrailing) {
-                            Button {
-                                self.pendingImage = nil
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.white, .black.opacity(0.6))
-                            }
-                            .offset(x: 6, y: -6)
-                        }
-                    Spacer()
-                }
-                .padding(.horizontal)
-            }
-            composerRow
-        }
-        .padding(.vertical, 8)
-        .background(.bar)
+        composerRow
+            .padding(.vertical, 8)
+            .background(.bar)
     }
 
     private var composerRow: some View {
@@ -199,16 +179,13 @@ struct ChatView: View {
             } else {
                 Button {
                     if speech.isRecording { speech.stop() }
-                    store.send(draft, image: pendingImage)
+                    store.send(draft)
                     draft = ""
-                    pendingImage = nil
                 } label: {
                     Image(systemName: "arrow.up.circle.fill")
                         .font(.title)
                 }
-                .disabled(
-                    draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        && pendingImage == nil)
+                .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
         .padding(.horizontal)
