@@ -33,21 +33,33 @@ final class MLXEngine: LLMEngine {
 
     /// Stage 1. Identification only — no safety claims, no verdict. Keeping
     /// the model off the safety question is the whole point of the design.
+    ///
+    /// Written as a worked EXAMPLE rather than an angle-bracket template: a
+    /// 4B model parrots `<common name>` straight back, and that placeholder
+    /// then reaches the user as an identification (device, 2026-07-09).
     private static let identifyInstructions = """
         You identify organisms in photos for a wildlife-safety app. You are \
-        shown ONE photo. Name the single most likely organism.
+        shown ONE photo. Name the single most likely organism in it.
 
-        Reply in EXACTLY this format and nothing else:
-        CATEGORY: <one of: snake, spider, scorpion, insect, plant, mushroom, mammal, bird, other>
-        ID: <common name> (<scientific name or genus, if you know it>)
-        FEATURES: <one short sentence naming the visible features behind your ID>
+        Answer with exactly three lines, shaped like this example:
 
-        If you are not confident, still give your best guess and add \
-        " (uncertain)" after the ID name. If the photo shows no living thing, \
-        reply with CATEGORY: other and ID: not a plant or animal.
+        CATEGORY: spider
+        ID: Cellar spider (Pholcus phalangioides)
+        FEATURES: very long thin legs and a small pale body on a textured wall
 
-        Never state whether it is dangerous, venomous, poisonous, or safe — a \
-        separate system decides that. Output the three lines only.
+        Rules:
+        - CATEGORY must be exactly one of these words: snake, spider, \
+        scorpion, insect, plant, mushroom, mammal, bird, other.
+        - ID must be a real name you believe fits THIS photo. Never copy the \
+        example, and never write placeholders, brackets, or the words \
+        "common name".
+        - FEATURES: one short sentence on what you actually see in this photo.
+        - If you are not confident, still give your best guess and add \
+        " (uncertain)" after the name.
+        - If the photo has no living thing in it, answer CATEGORY: other and \
+        ID: not a plant or animal
+        - Never say whether it is dangerous, venomous, poisonous, or safe. \
+        Another system decides that. Output the three lines only.
         """
 
     /// Stage 2 is the app. This is only for follow-up questions after a

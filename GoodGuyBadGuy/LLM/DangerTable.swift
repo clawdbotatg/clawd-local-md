@@ -33,7 +33,9 @@ struct DangerEntry: Decodable {
 struct VerdictResult {
     /// `nil` renders no banner (e.g. the photo isn't a plant or animal).
     let verdict: ChatMessage.Verdict?
-    /// Full display text, including the leading `VERDICT:` line when present.
+    /// Full display text: a `VERDICT:` line, then the model's `ID:` and
+    /// `SAW:` lines (so the user can audit the identification), then the
+    /// authoritative note. `ChatMessage` parses these back apart.
     let text: String
 }
 
@@ -63,13 +65,18 @@ enum DangerTable {
 
     /// Turn the identify stage's raw text into a verdict the app can stand behind.
     static func verdict(modelText: String) -> VerdictResult {
-        let parsed = parse(modelText)
-        let category = parsed.category ?? "other"
-        let idLine = parsed.id ?? modelText
+        // A 4B model sometimes parrots the prompt's own template back at us.
+        // Those lines must never reach the matcher: the instruction listing
+        // the categories contains the word "scorpion", which once turned a
+        // harmless cellar spider into a scorpion warning (device, 2026-07-09).
+        let cleaned = stripEchoedTemplate(modelText)
+        let parsed = parse(cleaned)
+        let category = knownCategory(parsed.category)
+        let features = parsed.features
 
         // Nothing living in frame: answer plainly, no banner.
-        if category == "other",
-            idLine.range(of: "not a plant or animal", options: .caseInsensitive) != nil
+        if (parsed.id ?? cleaned).range(of: "not a plant or animal", options: .caseInsensitive)
+            != nil
         {
             return VerdictResult(
                 verdict: nil,
@@ -78,17 +85,31 @@ enum DangerTable {
             )
         }
 
-        // Prefer the ID line; fall back to the whole reply, since the name
-        // sometimes lands in FEATURES instead.
-        let haystack = [parsed.id, parsed.features, modelText]
-            .compactMap { $0 }.joined(separator: " ")
-        let best = bestMatch(in: idLine)?.entry ?? bestMatch(in: haystack)?.entry
+        // The identification, if the model gave us a real one. A short
+        // unlabeled reply ("This is a leopard gecko.") is accepted as the ID;
+        // anything longer is prose we shouldn't mine for species names.
+        let idText = parsed.id ?? (cleaned.count <= 200 ? cleaned : nil)
+        let name = displayName(idText)
 
-        let name = displayName(parsed.id) ?? "This"
+        // Without a name we have nothing to look up, and we will not guess
+        // from stray words in the reply.
+        guard let name, let idText else {
+            return compose(
+                .caution, nil, features,
+                "I couldn't read an identification from the photo, so I can't tell you whether it's safe. Treat it as unknown: keep your distance, and don't touch or eat it."
+            )
+        }
+
         let uncertain =
-            idLine.range(of: "uncertain", options: .caseInsensitive) != nil
-            || idLine.range(of: "not sure", options: .caseInsensitive) != nil
-            || idLine.range(of: "unknown", options: .caseInsensitive) != nil
+            idText.range(of: "uncertain", options: .caseInsensitive) != nil
+            || idText.range(of: "not sure", options: .caseInsensitive) != nil
+            || idText.range(of: "unknown", options: .caseInsensitive) != nil
+
+        // Match on the identification, then on what the model says it saw —
+        // never on the whole raw reply.
+        let best =
+            bestMatch(in: idText)?.entry
+            ?? features.flatMap { bestMatch(in: $0)?.entry }
 
         if let best {
             // A confirmed dangerous match still stands when the model hedged;
@@ -96,31 +117,55 @@ enum DangerTable {
             // wrong species entirely.
             if uncertain, best.verdict == "good" {
                 return compose(
-                    .caution, name,
-                    "I can't identify this confidently. It resembles \(best.names[0]), which is harmless, but I'm not sure enough to say so — keep your distance and don't touch it."
+                    .caution, name, features,
+                    "The model isn't confident. This resembles \(best.names[0]), which is harmless, but that's not certain enough to call it safe — keep your distance and don't touch it."
                 )
             }
             // Wild mushrooms are never GOOD GUY, even on a match.
             if category == "mushroom", best.verdict == "good" {
                 return compose(
-                    .caution, name,
+                    .caution, name, features,
                     "\(best.note) Even so: never eat a wild mushroom on a photo ID — deadly species have edible look-alikes."
                 )
             }
-            return compose(uiVerdict(best.verdict), name, best.note)
+            return compose(uiVerdict(best.verdict), name, features, best.note)
         }
 
         // No match. Silence from a small model is not safety.
         if uncertain || cautionOnMiss.contains(category) {
             return compose(
-                .caution, name,
+                .caution, name, features,
                 "I couldn't match this to my danger list, so I can't confirm it's safe. Treat it as unknown: keep your distance, and don't touch or eat it."
             )
         }
         return compose(
-            .goodGuy, name,
-            "No match in my danger list, and nothing about this category is typically harmful. I can't be certain, so still don't handle it."
+            .goodGuy, name, features,
+            "No match in my danger list, and nothing in this category is typically harmful. I can't be certain, so still don't handle it."
         )
+    }
+
+    /// Categories the identify stage is allowed to emit; anything else (or a
+    /// parroted "<one of: …>" placeholder) is `other`, which fails to CAUTION.
+    private static let known: Set<String> = [
+        "snake", "spider", "scorpion", "insect", "plant", "mushroom", "mammal", "bird", "other",
+    ]
+
+    private static func knownCategory(_ raw: String?) -> String {
+        guard let raw, known.contains(raw) else { return "other" }
+        return raw
+    }
+
+    /// Drop any line that is the prompt's own template rather than an answer:
+    /// placeholders carry angle brackets, and the category instruction reads
+    /// "one of:". Without this the matcher reads our instructions as content.
+    private static func stripEchoedTemplate(_ text: String) -> String {
+        text.split(separator: "\n", omittingEmptySubsequences: false)
+            .filter { line in
+                !line.contains("<") && !line.contains(">")
+                    && line.range(of: "one of:", options: .caseInsensitive) == nil
+            }
+            .joined(separator: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// The **most specific** alias wins, and severity only breaks ties.
@@ -151,8 +196,11 @@ enum DangerTable {
         return best
     }
 
+    /// Emits what the model *thought it saw* alongside the verdict, so the
+    /// user can catch a misidentification themselves — a correct verdict for
+    /// the wrong species is still the wrong answer.
     private static func compose(
-        _ verdict: ChatMessage.Verdict, _ name: String, _ note: String
+        _ verdict: ChatMessage.Verdict, _ name: String?, _ saw: String?, _ note: String
     ) -> VerdictResult {
         let label =
             switch verdict {
@@ -160,8 +208,12 @@ enum DangerTable {
             case .badGuy: "BAD GUY"
             case .caution: "CAUTION"
             }
-        return VerdictResult(
-            verdict: verdict, text: "VERDICT: \(label)\n\n\(name). \(note)")
+        var lines = ["VERDICT: \(label)"]
+        if let name { lines.append("ID: \(name.prefix(90))") }
+        if let saw, !saw.isEmpty { lines.append("SAW: \(saw.prefix(160))") }
+        lines.append("")
+        lines.append(note)
+        return VerdictResult(verdict: verdict, text: lines.joined(separator: "\n"))
     }
 
     private static func uiVerdict(_ raw: String) -> ChatMessage.Verdict {
@@ -203,17 +255,29 @@ enum DangerTable {
         return (category, id, features)
     }
 
+    /// Tolerant of the decoration a small model sprinkles on labels:
+    /// `**ID:** foo`, `- ID: foo`, `# CATEGORY: plant`.
     private static func value(of key: String, in line: String) -> String? {
-        guard line.lowercased().hasPrefix(key.lowercased() + ":") else { return nil }
-        return String(line.dropFirst(key.count + 1))
-            .trimmingCharacters(in: .whitespaces)
+        let stripped = line.trimmingCharacters(
+            in: CharacterSet(charactersIn: " \t*-#•>"))
+        guard stripped.lowercased().hasPrefix(key.lowercased() + ":") else { return nil }
+        return String(stripped.dropFirst(key.count + 1))
+            .trimmingCharacters(in: CharacterSet(charactersIn: " \t*"))
     }
 
-    /// "Daylily (Hemerocallis) (uncertain)" → "Daylily (Hemerocallis)"
+    /// "Daylily (Hemerocallis) (uncertain)" → "Daylily (Hemerocallis)".
+    /// Returns nil for a parroted placeholder, which must never be shown to
+    /// the user as an identification or fed to the matcher.
     private static func displayName(_ id: String?) -> String? {
         guard var name = id?.trimmingCharacters(in: .whitespaces), !name.isEmpty else {
             return nil
         }
+        let isPlaceholder =
+            name.contains("<") || name.contains(">")
+            || name.range(of: "common name", options: .caseInsensitive) != nil
+            || name.range(of: "scientific name", options: .caseInsensitive) != nil
+        guard !isPlaceholder else { return nil }
+
         for hedge in ["(uncertain)", "(not sure)", "(unknown)"] {
             name = name.replacingOccurrences(
                 of: hedge, with: "", options: .caseInsensitive)

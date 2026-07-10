@@ -29,7 +29,7 @@ final class MockEngine: LLMEngine {
 
     private static let cannedIdentification = """
         CATEGORY: plant
-        ID: Daylily (Hemerocallis)
+        ID: Daylily (Hemerocallis fulva)
         FEATURES: orange trumpet-shaped flower with six petals and strap-like leaves
         """
 

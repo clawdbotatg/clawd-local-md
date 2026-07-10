@@ -4,3 +4,4 @@ DerivedData/
 build/
 *.xcworkspace/xcshareddata/swiftpm/Package.resolved
 .swiftpm/
+__pycache__/

@@ -18,10 +18,13 @@ struct MessageBubble: View {
                 if message.role == .assistant, let verdict = message.verdict {
                     verdictBanner(verdict)
                 }
+                if message.role == .assistant, message.identification != nil {
+                    identificationBlock
+                }
                 if message.isThinking && message.bodyText.isEmpty {
                     HStack(spacing: 6) {
                         ProgressView().controlSize(.small)
-                        Text("Thinking…").foregroundStyle(.secondary)
+                        Text("Looking…").foregroundStyle(.secondary)
                     }
                 } else if message.bodyText.isEmpty && message.image == nil
                     && message.verdict == nil
@@ -51,11 +54,32 @@ struct MessageBubble: View {
         }
     }
 
+    /// What the model thinks it is, and why. Shown above the note so a
+    /// misidentification is obvious at a glance: the verdict is only as good
+    /// as the ID it was looked up from, and the user is the one who can see
+    /// both the animal and the name.
+    @ViewBuilder
+    private var identificationBlock: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            if let identification = message.identification {
+                Text(identification)
+                    .font(.headline)
+                    .textSelection(.enabled)
+            }
+            if let observed = message.observed {
+                Text("Model saw: \(observed)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.bottom, 2)
+    }
+
     /// Shown under every verdict. Photo ID can be wrong — look-alikes are the
     /// whole hazard — so the app never implies permission to touch or eat.
     private var disclaimer: some View {
         Text(
-            "AI identification from one photo. It can be wrong — never touch, handle, or eat anything based on this. In an emergency call poison control or a vet."
+            "AI identification from one photo. It can be wrong — check the ID above, and never touch, handle, or eat anything based on this. In an emergency call poison control or a vet."
         )
         .font(.caption2)
         .foregroundStyle(.secondary)
