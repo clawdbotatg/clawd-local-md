@@ -97,7 +97,25 @@ when to be seen.
 - **Chat-first** (departs from the parent's image-first flow): the composer
   is live as soon as the brain is ready — text/dictation/photo from message
   one. `followupInstructions` covers both the no-verdict case and the
-  verdict-is-authoritative case.
+  verdict-is-authoritative case, and makes the library lookup MANDATORY for
+  symptom questions (with slang→medical translation: "balls hurt" →
+  "testicle pain") — answer first, photo suggestion only for visible
+  findings, never instead of answering.
+- **Tool-call recovery** (`ToolCallRecovery.swift`): the 4-bit model
+  sometimes stutters the opening tag (`<tool_call>` twice), which makes
+  mlx-swift-lm's `ToolCallProcessor` flush the whole block as plain text —
+  the user saw raw tags and no answer (device, 2026-07-11). `followUp` now
+  scrubs tool-call text from the visible stream, re-parses leaked calls,
+  dispatches them itself (`dispatchTool` is shared with the native path),
+  shows a clean "🔎 Searching the medical library — …" status line, and
+  continues the turn by replaying assistant-tool-call + tool-result
+  messages (same shape the library uses natively). Two recovery rounds
+  max. Verified on device: "my balls hurt" → search("testicle pain") →
+  get_health_topic("Testicular Disorders") → grounded answer.
+- Test a text turn headless on the phone:
+  `xcrun devicectl device process launch --terminate-existing
+  --environment-variables '{"LMD_ASK":"my balls hurt"}' --device <udid>
+  com.clawd.localmd`, then `tools/pulllog.sh` shows the tool-call trace.
 - Everything else (Brain switcher via `BrainCatalog`, offline-only tools
   `get_location` + `get_device_status`, fresh-ChatSession-per-turn) is
   inherited unchanged — see the parent's CLAUDE.md notes below.

@@ -74,32 +74,46 @@ final class MLXEngine: LLMEngine {
 
     /// Text turns: health questions from the first message on, and
     /// follow-ups once a photo verdict has been rendered.
+    ///
+    /// The library lookup is MANDATORY for symptom questions. A 4B model
+    /// freestyling medicine is the failure mode this app exists to avoid —
+    /// and without the hard rule it dodges into "take a photo" instead of
+    /// answering (watched on device 2026-07-11: "my balls hurt" → "why not
+    /// photograph it"). Look it up, answer from the source, then triage.
     private var followupInstructions: String {
         """
         You are Local MD, a private health helper running fully on-device \
         on the user's iPhone (\(modelName) via MLX — no cloud, nothing \
-        leaves the phone). You are NOT A DOCTOR and you never diagnose.
+        leaves the phone). You are NOT A DOCTOR and you never diagnose, \
+        but you always give a useful first look.
 
-        Answer briefly — a few sentences, no filler. If a VERDICT from a \
-        photo appears earlier in this conversation, it and its guidance \
-        are authoritative: do not contradict them, do not soften them. Do \
-        not invent medical claims, diagnoses, or treatments. If you don't \
-        know, say so and tell them a clinician is the right next step. If \
-        they describe something visible on their skin or body, suggest \
-        taking a photo right here for a proper first look.
+        You have an offline medical library on this phone: MedlinePlus, \
+        from the NIH. When the user mentions ANY symptom, pain, body part, \
+        condition, medicine, or treatment, you MUST look it up BEFORE \
+        answering: call search_health_topics using proper medical terms \
+        (translate slang first — "balls hurt" means testicle pain), then \
+        get_health_topic on the best matching title. Base your answer on \
+        what the library says and mention MedlinePlus as the source.
 
-        Never tell the user something is safe to ignore. If they mention \
-        fever, spreading, severe pain, trouble breathing, or feeling very \
-        unwell, tell them to seek medical care now. For possible poisoning \
-        mention Poison Control; for emergencies, 911.
+        Answer in 2 to 6 sentences: what this symptom most often means \
+        according to the library, then how seriously to take it — always \
+        repeat the library's when-to-get-care and emergency signs. Err \
+        toward care: sudden, severe, or worsening symptoms deserve a \
+        clinician today. Never tell the user it is nothing, and never \
+        answer a symptom question with only "see a doctor" — say what the \
+        library says first.
 
-        You have an offline reference library on this phone: MedlinePlus, \
-        from the NIH. For factual questions — what a condition is, what \
-        usually helps, how to prevent it — call search_health_topics, then \
-        get_health_topic on the best title, and base your answer on what it \
-        says, mentioning MedlinePlus as the source. The library is \
-        reference material only: it never overrides or softens the verdict \
-        above, and if it seems to conflict, the verdict wins.
+        If a VERDICT from a photo appears earlier in this conversation, it \
+        is authoritative: do not contradict or soften it, and the library \
+        never overrides it.
+
+        Only suggest taking a photo when the concern is visible on the \
+        skin, and only AFTER you have answered — never instead of \
+        answering. Pain and internal symptoms cannot be photographed.
+
+        If they mention severe pain, trouble breathing, fainting, or \
+        feeling very unwell, tell them to seek care now. For possible \
+        poisoning mention Poison Control; for emergencies, 911.
         """
     }
 
@@ -177,19 +191,23 @@ final class MLXEngine: LLMEngine {
                 repetitionContextSize: 64
             ),
             tools: withTools ? CorpusTools.specs + PhoneTools.specs + MoreTools.specs : [],
-            toolDispatch: { call in
-                DebugLog.log("tool call: \(call.function.name) args: \(call.function.arguments)")
-                // A stuck tool must never hang the whole reply (the model
-                // waits on this result), so every tool races a 30s deadline.
-                let result = await Self.withDeadline(seconds: 30) {
-                    if let corpusResult = await CorpusTools.dispatch(call) { return corpusResult }
-                    if let moreResult = await MoreTools.dispatch(call) { return moreResult }
-                    return await PhoneTools.dispatch(call)
-                } ?? #"{"error": "tool timed out after 30 seconds"}"#
-                DebugLog.log("tool result: \(result.prefix(300))")
-                return result
-            }
+            toolDispatch: { call in await Self.dispatchTool(call) }
         )
+    }
+
+    /// One dispatcher for both paths: the library's native tool loop, and
+    /// the engine's recovery of leaked tool calls (see `ToolCallRecovery`).
+    /// A stuck tool must never hang the whole reply (the model waits on
+    /// this result), so every tool races a 30s deadline.
+    private static func dispatchTool(_ call: ToolCall) async -> String {
+        DebugLog.log("tool call: \(call.function.name) args: \(call.function.arguments)")
+        let result = await withDeadline(seconds: 30) {
+            if let corpusResult = await CorpusTools.dispatch(call) { return corpusResult }
+            if let moreResult = await MoreTools.dispatch(call) { return moreResult }
+            return await PhoneTools.dispatch(call)
+        } ?? #"{"error": "tool timed out after 30 seconds"}"#
+        DebugLog.log("tool result: \(result.prefix(300))")
+        return result
     }
 
     private static func withDeadline(
@@ -310,25 +328,67 @@ final class MLXEngine: LLMEngine {
     private func followUp(_ prompt: String, container: ModelContainer) -> AsyncThrowingStream<
         String, Error
     > {
-        let session = makeSession(
-            container, instructions: followupInstructions, maxTokens: 300, withTools: true)
         let userMessage = Chat.Message.user(prompt)
-        let upstream = session.streamResponse(to: history + [userMessage])
         DebugLog.log("follow-up (history: \(history.count) msgs)")
 
         return AsyncThrowingStream { continuation in
             Task { @MainActor in
-                var reply = ""
+                // What the user actually sees; committed to history at the
+                // end. Raw tool-call text never reaches it (Scrubber), and
+                // leaked calls are dispatched here with the turn continued —
+                // up to two recovery rounds, then we stop retrying.
+                var visible = ""
+                var conversation = self.history + [userMessage]
                 do {
-                    for try await chunk in upstream {
-                        reply += chunk
-                        continuation.yield(chunk)
+                    for round in 1...3 {
+                        // 512: a lookup turn spends tokens on tool calls
+                        // before the answer; 300 truncated mid-sentence.
+                        let session = self.makeSession(
+                            container, instructions: self.followupInstructions,
+                            maxTokens: 512, withTools: true)
+                        var raw = ""
+                        var scrubber = ToolCallRecovery.Scrubber()
+                        for try await chunk in session.streamResponse(to: conversation) {
+                            raw += chunk
+                            if let clean = scrubber.pass(chunk), !clean.isEmpty {
+                                visible += clean
+                                continuation.yield(clean)
+                            }
+                        }
+                        if let tail = scrubber.finish(), !tail.isEmpty {
+                            visible += tail
+                            continuation.yield(tail)
+                        }
+
+                        let leaked = ToolCallRecovery.leakedCalls(in: raw)
+                        guard !leaked.isEmpty, round < 3 else { break }
+                        DebugLog.log("recovering \(leaked.count) leaked tool call(s), round \(round)")
+
+                        // Show the lookup instead of tag spam, run the tools
+                        // ourselves, and replay the turn the way the library
+                        // does natively: assistant tool-call + tool results.
+                        var followup: [Chat.Message] = [
+                            .assistant(ToolCallRecovery.canonicalBlock(for: leaked))
+                        ]
+                        for call in leaked {
+                            let status = ToolCallRecovery.statusLine(for: call) + "\n"
+                            visible += status
+                            continuation.yield(status)
+                            followup.append(.tool(await Self.dispatchTool(call)))
+                        }
+                        conversation += followup
                     }
-                    self.commit(user: userMessage, reply: reply)
+                    if visible.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        let fallback =
+                            "I couldn't finish looking that up. Ask me once more — and if it's urgent, don't wait on an app."
+                        visible += fallback
+                        continuation.yield(fallback)
+                    }
+                    self.commit(user: userMessage, reply: visible)
                     continuation.finish()
                 } catch {
                     DebugLog.log("stream error: \(error)")
-                    if !reply.isEmpty { self.commit(user: userMessage, reply: reply) }
+                    if !visible.isEmpty { self.commit(user: userMessage, reply: visible) }
                     continuation.finish(throwing: error)
                 }
             }

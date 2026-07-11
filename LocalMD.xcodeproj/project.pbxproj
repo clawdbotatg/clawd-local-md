@@ -26,6 +26,7 @@
 		9CC98A44D244A26CEE5167B8 /* LocalMDApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3DDB54712AE8FFFEAAA1D47 /* LocalMDApp.swift */; };
 		A58F9B2FB40033F8B382B34C /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 37F8352F45B1920DE42C155C /* MLXLLM */; };
 		B3E1A636868764034B3EA86F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5591AA7556BA841BD0530697 /* Assets.xcassets */; };
+		BA646209F2DD3DD15C4BD40B /* ToolCallRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA6A3F513DD31F5B5B34FC26 /* ToolCallRecovery.swift */; };
 		C3AD8D55460829133E457B89 /* CameraPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 048BA2280E0F476B86D15C31 /* CameraPicker.swift */; };
 		C5065517EBBA39D43F4DDFBE /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = BFC24A17226B481407B448F5 /* PrivacyInfo.xcprivacy */; };
 		C58C2DD23F8C2C7770FA7D6D /* TriageData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE298D80BA951A3C681F6902 /* TriageData.swift */; };
@@ -51,6 +52,7 @@
 		63239ADB8B075C493DF3FBA5 /* ChatStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatStore.swift; sourceTree = "<group>"; };
 		68199FE20A0A1B66B044F7F3 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		78187DEB1C93928540E1FBD0 /* LocalMD.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = LocalMD.entitlements; sourceTree = "<group>"; };
+		AA6A3F513DD31F5B5B34FC26 /* ToolCallRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolCallRecovery.swift; sourceTree = "<group>"; };
 		B526E6D9279869E1F44F6215 /* ChatMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessage.swift; sourceTree = "<group>"; };
 		BAAD9FB1D04E003157AB9EA7 /* BrainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrainView.swift; sourceTree = "<group>"; };
 		BFC24A17226B481407B448F5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -160,6 +162,7 @@
 				1E6477B7C1E695D30FA01D73 /* MLXEngine.swift */,
 				012FCB1F097065262DDDAE15 /* MoreTools.swift */,
 				ED2E0222B17FE92F87EE5B14 /* PhoneTools.swift */,
+				AA6A3F513DD31F5B5B34FC26 /* ToolCallRecovery.swift */,
 				DE298D80BA951A3C681F6902 /* TriageData.swift */,
 				06C424FAA34E266AAEEF8D00 /* TriageTable.swift */,
 			);
@@ -267,6 +270,7 @@
 				2FA64E9BA4EBDCC89F39CCA5 /* MoreTools.swift in Sources */,
 				758D9588D30C55EC2952466C /* PhoneTools.swift in Sources */,
 				38FFC336ED133D29D0915360 /* SpeechRecognizer.swift in Sources */,
+				BA646209F2DD3DD15C4BD40B /* ToolCallRecovery.swift in Sources */,
 				C58C2DD23F8C2C7770FA7D6D /* TriageData.swift in Sources */,
 				3CCED9E0907F68D7A4AA3F08 /* TriageTable.swift in Sources */,
 			);
