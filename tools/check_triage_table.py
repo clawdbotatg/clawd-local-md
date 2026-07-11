@@ -213,6 +213,33 @@ CASES = [
 ]
 
 
+def text_verdict(entries, text):
+    """Mirrors TriageTable.textVerdict: curated triage over TYPED symptom
+    text — fires only when the worst matching entry is urgent/soon."""
+    matches = all_matches(entries, text)
+    if not matches:
+        return None
+    worst = max(matches, key=lambda m: SEVERITY[m["level"]])
+    if SEVERITY[worst["level"]] < SEVERITY["soon"]:
+        return None
+    return worst["level"].upper()
+
+
+# (typed message, expected banner or None, why)
+TEXT_CASES = [
+    ("i just got bit by a snake", "URGENT", "snakebite text is an emergency, not a chat"),
+    ("a rattlesnake got me on the ankle", "URGENT", "named venomous snakes match"),
+    ("my dog bit me pretty bad", "URGENT", "dog bite needs same-day care"),
+    ("bitten by a cat last night", "URGENT", "cat bites infect fastest"),
+    ("i think a brown recluse bit me", "SOON", "named venomous spider escalates past generic"),
+    ("a spider bit me", None, "generic spider bite (watch) stays conversational"),
+    ("what is ringworm", None, "routine topics never banner a text chat"),
+    ("my balls hurt", None, "no curated match -> model + library path"),
+    ("i have shingles near my eye", "URGENT", "urgent entries fire from text too"),
+    ("my dog bit a hole in my shoe", None, "'dog bit me' must not fire on the shoe"),
+]
+
+
 def main():
     entries = load_entries()
     print(f"{len(entries)} entries decode OK")
@@ -250,6 +277,15 @@ def main():
         ok = got == want
         failures += not ok
         print(f"  {'ok  ' if ok else 'FAIL'} {got:8} {raw_name!r} [{category}]")
+        if not ok:
+            print(f"       wanted {want} ({why})")
+
+    print()
+    for text, want, why in TEXT_CASES:
+        got = text_verdict(entries, text)
+        ok = got == want
+        failures += not ok
+        print(f"  {'ok  ' if ok else 'FAIL'} {str(got):8} text: {text!r}")
         if not ok:
             print(f"       wanted {want} ({why})")
 

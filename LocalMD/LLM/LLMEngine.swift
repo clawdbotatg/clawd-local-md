@@ -58,6 +58,12 @@ final class MockEngine: LLMEngine {
         AsyncThrowingStream<String, Error> { continuation in
             let task = Task { @MainActor in
                 guard image != nil else {
+                    // Same curated text triage as the device engine: an
+                    // urgent/soon match banners before anything else, making
+                    // the sim a regression test for text emergencies too.
+                    if let curated = TriageTable.textVerdict(prompt) {
+                        continuation.yield(curated.text + "\n\n")
+                    }
                     // Exercise the real bundled corpus, so a simulator run
                     // proves HealthCorpus.db ships and FTS5 answers — the
                     // same lookup the device model reaches via its tools.

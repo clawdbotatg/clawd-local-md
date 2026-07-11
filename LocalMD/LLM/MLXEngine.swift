@@ -348,6 +348,22 @@ final class MLXEngine: LLMEngine {
                 var fallbackTopic: String?
                 var conversation = self.history + [userMessage]
                 do {
+                    // Curated text triage FIRST: an urgent/soon match on the
+                    // user's own words ("bit by a snake") renders the same
+                    // authoritative verdict a photo would — instantly, from
+                    // TriageData, before the model says anything. The model
+                    // then continues with the verdict in its context.
+                    // Deduped so a follow-up mentioning the same finding
+                    // doesn't re-banner.
+                    if let curated = TriageTable.textVerdict(prompt),
+                        !self.history.contains(where: { $0.content.contains(curated.text) })
+                    {
+                        let lead = curated.text + "\n\n"
+                        visible += lead
+                        answer += lead
+                        continuation.yield(lead)
+                        conversation.append(.assistant(curated.text))
+                    }
                     for round in 1...3 {
                         // 512: a lookup turn spends tokens on tool calls
                         // before the answer; 300 truncated mid-sentence.
@@ -398,7 +414,8 @@ final class MLXEngine: LLMEngine {
                     // after a lookup, or a truncated tool call). Never leave
                     // the user hanging: print the library entry itself.
                     if answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        let fallback = Self.libraryFallback(topicTitle: fallbackTopic)
+                        let fallback = Self.libraryFallback(
+                            topicTitle: fallbackTopic, query: prompt)
                         visible += fallback
                         continuation.yield(fallback)
                     }
@@ -417,16 +434,54 @@ final class MLXEngine: LLMEngine {
     /// the library directly — deterministic, sourced, and always ends with
     /// an escalation line. Reference text, not a verdict: severity language
     /// stays MedlinePlus's own.
-    private static func libraryFallback(topicTitle: String?) -> String {
+    private static func libraryFallback(topicTitle: String?, query: String) -> String {
         guard let topicTitle, let topic = HealthCorpus.topic(named: topicTitle) else {
             return
                 "I couldn't finish looking that up — ask me once more. If this is severe, sudden, or getting worse, don't wait on an app: get medical care now."
         }
-        let excerpt = topic.summary.count > 900
-            ? String(topic.summary.prefix(900)) + "…"
-            : topic.summary
+        let excerpt = relevantExcerpt(from: topic.summary, query: query)
         return
             "Here's what MedlinePlus (NIH) says about \(topic.title):\n\n\(excerpt)\n\nIf this is severe, sudden, or getting worse, get medical care now — don't wait on an app."
+    }
+
+    /// The paragraphs of a topic that actually bear on the user's question,
+    /// not just the top of the article — a topic opens with background and
+    /// prevention, which is exactly wrong for "I just got bit" (watched on
+    /// device 2026-07-11: a snakebite got "leave snakes alone"). Paragraphs
+    /// are scored by overlap with the user's words, with a heavy boost for
+    /// seek-care language, and kept in original order.
+    private static func relevantExcerpt(from body: String, query: String, cap: Int = 900)
+        -> String
+    {
+        let paragraphs = body.components(separatedBy: "\n\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard paragraphs.count > 1 else {
+            return body.count > cap ? String(body.prefix(cap)) + "…" : body
+        }
+        let careSignals = [
+            "911", "poison control", "emergency", "call your", "get medical", "seek",
+            "right away", "immediately", "if you are bitten", "if you have been", "doctor if",
+        ]
+        let terms = Set(
+            query.lowercased()
+                .components(separatedBy: CharacterSet.alphanumerics.inverted)
+                .filter { $0.count > 2 })
+        let scored = paragraphs.enumerated().map { index, paragraph in
+            let lower = paragraph.lowercased()
+            let overlap = terms.filter { lower.contains($0) }.count
+            let care = careSignals.filter { lower.contains($0) }.count * 3
+            return (index: index, score: overlap + care, text: paragraph)
+        }
+        var chosen: [(index: Int, text: String)] = []
+        var total = 0
+        for candidate in scored.sorted(by: { $0.score > $1.score }) {
+            if total + candidate.text.count > cap, !chosen.isEmpty { continue }
+            chosen.append((candidate.index, candidate.text))
+            total += candidate.text.count
+            if total >= cap { break }
+        }
+        return chosen.sorted { $0.index < $1.index }.map(\.text).joined(separator: "\n\n")
     }
 
     /// Append a finished exchange to the replayed history. Think-blocks are

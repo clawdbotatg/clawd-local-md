@@ -29,12 +29,34 @@ enum ToolCallRecovery {
             var out = ""
             while true {
                 if suppressing {
-                    if let end = buffer.range(of: ToolCallRecovery.endTag) {
-                        buffer = String(buffer[end.upperBound...])
-                        suppressing = false
+                    // What follows the opener decides: `{` is a real call
+                    // payload, another opener is a stutter, and anything
+                    // else is PROSE the model wrote after a stray tag —
+                    // release it (watched on device 2026-07-11: the whole
+                    // snake-bite answer sat behind one stray <tool_call>).
+                    let content = buffer.drop(while: \.isWhitespace)
+                    if content.isEmpty { return out.isEmpty ? nil : out }
+                    if content.hasPrefix("{") {
+                        if let end = buffer.range(of: ToolCallRecovery.endTag) {
+                            buffer = String(buffer[end.upperBound...])
+                            suppressing = false
+                            continue
+                        }
+                        return out.isEmpty ? nil : out
+                    }
+                    if ToolCallRecovery.startTag.hasPrefix(content) {
+                        // Partial second opener at the tail — need more.
+                        return out.isEmpty ? nil : out
+                    }
+                    if content.hasPrefix(ToolCallRecovery.startTag) {
+                        // Stuttered opener: drop it, keep evaluating.
+                        buffer = String(content.dropFirst(ToolCallRecovery.startTag.count))
                         continue
                     }
-                    return out.isEmpty ? nil : out
+                    // Stray opener followed by prose — the tag was noise.
+                    suppressing = false
+                    buffer = String(content)
+                    continue
                 }
                 if let start = buffer.range(of: ToolCallRecovery.startTag) {
                     out += String(buffer[..<start.lowerBound])

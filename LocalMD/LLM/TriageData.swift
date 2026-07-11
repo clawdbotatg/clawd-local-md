@@ -185,9 +185,13 @@ extension TriageTable {
          "category":"bite","level":"soon","source":"CDC",
          "note":"Remove a tick promptly: fine-tipped tweezers, grip close to the skin, pull straight up — no matches, no petroleum jelly. Note the date. Watch the area for 30 days: an expanding ring or bullseye rash, fever, chills, or body aches mean see a clinician right away and mention the tick. If it was attached more than a day in a Lyme area, it's reasonable to call a clinician now about preventive treatment."},
 
-        {"names":["spider bite"],
+        {"names":["spider bite","bit by a spider","spider bit me"],
          "category":"bite","level":"watch","source":"Mayo Clinic",
          "note":"Most spider bites cause only a small red bump that settles with washing, a cold pack, and time — and most suspected spider bites are actually something else. See a clinician the same day if the center darkens or blisters, pain spreads or intensifies, or you develop fever, chills, or muscle cramps — those can signal a recluse or widow bite."},
+
+        {"names":["black widow","brown recluse","black widow bite","brown recluse bite","recluse bite","widow bite"],
+         "category":"bite","level":"soon","source":"Mayo Clinic",
+         "note":"A suspected black widow or brown recluse bite deserves medical care today. Wash the area, use a cold pack, and keep the limb still on the way. Go now — not later — if pain spreads or intensifies, the center darkens or blisters, or you develop fever, chills, sweating, or muscle cramps."},
 
         {"names":["bee sting","wasp sting","hornet sting","yellow jacket sting"],
          "category":"bite","level":"watch","source":"Mayo Clinic",
@@ -205,15 +209,15 @@ extension TriageTable {
          "category":"bite","level":"routine","source":"AAD",
          "note":"Clusters of small itchy bumps around the ankles and lower legs, especially with pets at home, fit flea bites. Treat the itching with OTC cream, and treat the pets and home for fleas. See a clinician if bites blister, spread widely, or look infected from scratching."},
 
-        {"names":["animal bite","dog bite","cat bite"],
+        {"names":["animal bite","dog bite","cat bite","bit by a dog","bitten by a dog","dog bit me","bit by a cat","bitten by a cat","cat bit me","bit by an animal","bitten by an animal","raccoon bite","bat bite","bit by a bat"],
          "category":"bite","level":"urgent","source":"CDC",
          "note":"Wash any animal bite thoroughly with soap and running water right away, then get medical care the same day: bites infect quickly (cat bites especially), you may need antibiotics or a tetanus booster, and a clinician must assess rabies risk — mention whether the animal was known and vaccinated. Deep wounds, face or hand bites, and bites from strays or wild animals should not wait at all."},
 
-        {"names":["human bite"],
+        {"names":["human bite","bit by a person","someone bit me"],
          "category":"bite","level":"urgent","source":"Mayo Clinic",
          "note":"Human bites that break the skin infect more often than most animal bites — including cuts on knuckles from contact with teeth. Wash well and get medical care the same day; these often need preventive antibiotics."},
 
-        {"names":["snake bite","snakebite"],
+        {"names":["snake bite","snakebite","bit by a snake","bitten by a snake","snake bit me","rattlesnake","copperhead","cottonmouth","water moccasin","coral snake"],
          "category":"bite","level":"urgent","source":"CDC",
          "note":"Treat any snake bite as an emergency: call 911 or get to an ER now, keep the bitten limb still and roughly level with the heart, and remove rings or tight items before swelling. Do NOT cut the wound, try to suck out venom, apply ice or a tourniquet, or waste time catching the snake — a photo from a safe distance is plenty."},
 

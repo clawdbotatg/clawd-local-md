@@ -183,6 +183,21 @@ enum TriageTable {
         )
     }
 
+    /// Curated triage for a TYPED symptom description — the photo pipeline's
+    /// authority extended to text. Matches the user's own words against the
+    /// same alias table (entries carry natural phrasings like "bit by a
+    /// snake") and fires only for URGENT/SOON matches: emergencies get the
+    /// curated banner and note before the model says a word, while minor and
+    /// unmatched messages stay conversational. Multiple matches escalate to
+    /// the worst, same as look-alikes.
+    static func textVerdict(_ text: String) -> VerdictResult? {
+        let matches = allMatches(in: text)
+        guard let worst = matches.max(by: { severity($0.level) < severity($1.level) }),
+            severity(worst.level) >= severity("soon")
+        else { return nil }
+        return compose(uiVerdict(worst.level), worst.note)
+    }
+
     private static func compose(_ verdict: ChatMessage.Verdict, _ note: String) -> VerdictResult {
         let label =
             switch verdict {

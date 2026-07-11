@@ -101,6 +101,18 @@ when to be seen.
   symptom questions (with slang→medical translation: "balls hurt" →
   "testicle pain") — answer first, photo suggestion only for visible
   findings, never instead of answering.
+- **Text triage** (`TriageTable.textVerdict`): the photo pipeline's curated
+  authority extended to TYPED text. The user's own words are matched
+  against the same alias table — entries carry natural phrasings ("bit by
+  a snake", "dog bit me") — and an URGENT/SOON match banners the curated
+  verdict + note BEFORE the model runs (both engines; deduped across a
+  conversation; minor/unmatched messages stay conversational). Born from
+  "i just got bit by a snake" getting animal-bite *prevention tips*
+  (2026-07-11). Named venomous spiders have their own SOON entry. When
+  the model goes silent after a lookup, `libraryFallback` now also picks
+  the topic paragraphs *relevant to the question* (care-language boosted)
+  instead of the article's prevention-first opening. check_triage_table.py
+  has a TEXT_CASES section mirroring textVerdict — keep them in sync.
 - **Tool-call recovery** (`ToolCallRecovery.swift`): the 4-bit model
   sometimes stutters the opening tag (`<tool_call>` twice), which makes
   mlx-swift-lm's `ToolCallProcessor` flush the whole block as plain text —
