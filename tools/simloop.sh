@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Autonomous simulator loop: build GoodGuyBadGuy, install + launch it in an iOS
+# Autonomous simulator loop: build LocalMD, install + launch it in an iOS
 # simulator, and grab a screenshot so an agent can *see* the running app.
 #
 #   tools/simloop.sh [screenshot.png]
@@ -10,8 +10,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-OUT="${1:-/tmp/goodguybadguy-sim.png}"
-BUNDLE_ID="com.clawd.goodguybadguy"
+OUT="${1:-/tmp/localmd-sim.png}"
+BUNDLE_ID="com.clawd.localmd"
 
 UDID=$(xcrun simctl list devices available -j | SIM_NAME="${SIM_NAME:-}" python3 -c '
 import json, os, sys
@@ -30,14 +30,14 @@ echo "simulator: $UDID"
 # -skipPackagePluginValidation / -skipMacroValidation: headless xcodebuild
 # can't show the "trust this plugin/macro?" prompt (mlx-swift's CudaBuild
 # plugin, swift-huggingface's #huggingFaceLoadModelContainer macro).
-xcodebuild -project GoodGuyBadGuy.xcodeproj -scheme GoodGuyBadGuy \
+xcodebuild -project LocalMD.xcodeproj -scheme LocalMD \
   -destination "platform=iOS Simulator,id=$UDID" \
   -derivedDataPath build \
   -skipPackagePluginValidation -skipMacroValidation \
   -quiet build
 
 xcrun simctl bootstatus "$UDID" -b   # boots if needed, waits until ready
-xcrun simctl install "$UDID" build/Build/Products/Debug-iphonesimulator/GoodGuyBadGuy.app
+xcrun simctl install "$UDID" build/Build/Products/Debug-iphonesimulator/LocalMD.app
 xcrun simctl launch "$UDID" "$BUNDLE_ID"
 sleep 4  # let the mock "download" finish and first frame settle
 xcrun simctl io "$UDID" screenshot "$OUT"

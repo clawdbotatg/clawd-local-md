@@ -6,9 +6,9 @@ import SwiftUI
 /// photo prompt and the chat.
 struct BrainView: View {
     let store: ChatStore
-    // Launch with GGBG_BRAIN_OPEN=1 to start expanded (automated screenshots).
+    // Launch with LMD_BRAIN_OPEN=1 to start expanded (automated screenshots).
     @State private var expanded =
-        ProcessInfo.processInfo.environment["GGBG_BRAIN_OPEN"] != nil
+        ProcessInfo.processInfo.environment["LMD_BRAIN_OPEN"] != nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {

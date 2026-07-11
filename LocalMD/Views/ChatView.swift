@@ -25,9 +25,9 @@ struct ChatView: View {
         .task {
             store.activate()
             // Demo hook for automated simulator screenshots: launch with
-            // SIMCTL_CHILD_GGBG_DEMO=1 to auto-send a photo so the verdict
+            // SIMCTL_CHILD_LMD_DEMO=1 to auto-send a photo so the verdict
             // renders without driving taps.
-            if ProcessInfo.processInfo.environment["GGBG_DEMO"] != nil,
+            if ProcessInfo.processInfo.environment["LMD_DEMO"] != nil,
                 store.messages.isEmpty
             {
                 // Bundled daylily art (tools/daylily.svg) so demo screenshots
@@ -64,9 +64,9 @@ struct ChatView: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 1) {
-                Text("Good Guy Bad Guy")
+                Text("Local MD")
                     .font(.title.bold())
-                Text("On-device · works offline")
+                Text("NOT A DOCTOR · 100% private · works offline")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -75,7 +75,7 @@ struct ChatView: View {
                 Button {
                     store.clear()
                 } label: {
-                    Label("New scan", systemImage: "arrow.counterclockwise")
+                    Label("New look", systemImage: "arrow.counterclockwise")
                         .font(.subheadline)
                 }
             }
@@ -126,12 +126,12 @@ struct ChatView: View {
 
     private var emptyState: some View {
         VStack(spacing: 14) {
-            Text("🐍🕷️🍄")
+            Text("🩺")
                 .font(.system(size: 44))
-            Text("Good guy or bad guy?")
+            Text("A private first look")
                 .font(.title2.bold())
             Text(
-                "Found a snake, spider, bug, plant, or mushroom? Snap a photo — no typing needed. It names what it is, then tells you if it's dangerous."
+                "Noticed something on your skin — a rash, a mole, a bite, a burn? Snap a photo. It never leaves this phone and never touches your photo library. You'll get a careful first look and what a doctor would want to know. Not a diagnosis."
             )
             .font(.footnote)
             .foregroundStyle(.secondary)

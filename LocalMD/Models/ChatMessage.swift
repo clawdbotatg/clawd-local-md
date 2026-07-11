@@ -7,11 +7,15 @@ struct ChatMessage: Identifiable, Equatable {
         case assistant
     }
 
-    /// The app (not the model) composes every verdict; see `DangerTable`.
+    /// The app (not the model) composes every verdict; see `TriageTable`.
+    /// Ordered worst-first: urgent (get care now) > soon (see a clinician in
+    /// the next day or two) > watch (worth a professional look) > routine
+    /// (usually minor, with escalation triggers). There is no "all clear".
     enum Verdict {
-        case goodGuy
-        case badGuy
-        case caution
+        case urgent
+        case soon
+        case watch
+        case routine
     }
 
     let id = UUID()
@@ -103,11 +107,12 @@ struct ChatMessage: Identifiable, Equatable {
         return value.isEmpty ? nil : value
     }
 
-    /// BAD is checked first so a muddled line errs toward the red banner.
+    /// Worst level is checked first so a muddled line errs toward more care.
     private static func verdict(from line: String) -> Verdict? {
-        if line.contains("BAD") { return .badGuy }
-        if line.contains("CAUTION") { return .caution }
-        if line.contains("GOOD") { return .goodGuy }
+        if line.contains("URGENT") { return .urgent }
+        if line.contains("SOON") { return .soon }
+        if line.contains("WATCH") { return .watch }
+        if line.contains("ROUTINE") { return .routine }
         return nil
     }
 }

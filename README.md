@@ -1,77 +1,107 @@
-# Good Guy Bad Guy — is that critter dangerous? Ask your phone. Offline.
+# Local MD — NOT A DOCTOR. A private first look, entirely on your phone.
 
-You're camping. Something with too many legs is on your tent, or a snake is
-sunning itself on the trail. You have zero bars. Take a photo, and a
-**vision-language model running entirely on your iPhone** tells you:
+Noticed something on your skin — a rash, a mole, a bite, a burn — and your
+first instinct is to photograph it and ask the internet? Don't. That photo of
+your body should not live in your camera roll, your iCloud, or somebody's
+server logs.
 
-> **VERDICT: BAD GUY** 🔴 — Black widow (*Latrodectus mactans*), high
-> confidence: glossy black body, red hourglass. Keep your distance and shake
-> out shoes that sat outside.
+Local MD gives you a **private first look**: take a photo *inside the app*
+and a **vision-language model running entirely on your iPhone** takes a look:
 
-No API keys, no server, no signal needed. The app downloads
+> **GET CARE NOW** 🔴 — Bullseye rash. An expanding ring around a tick bite
+> fits erythema migrans, the classic early sign of Lyme disease. Early
+> antibiotics are highly effective, so see a clinician promptly…
+
+The photo **never leaves your phone, never touches your photo library, and
+is never written to disk** — it lives in memory, goes through the on-device
+model, and is gone when you close the app. No API keys, no server, no signal
+needed. The app downloads
 [`mlx-community/Qwen3-VL-4B-Instruct-4bit`](https://huggingface.co/mlx-community/Qwen3-VL-4B-Instruct-4bit)
-(~2.7 GB) from Hugging Face once on first launch, then all inference happens
-on the iPhone's GPU via [MLX Swift](https://github.com/ml-explore/mlx-swift-lm).
-Airplane mode is the intended operating condition.
+(~2.7 GB) once on first launch, then all inference happens on the iPhone's
+GPU via [MLX Swift](https://github.com/ml-explore/mlx-swift-lm). Airplane
+mode is the intended operating condition.
 
-Every identification opens with a parseable verdict line the UI renders as a
-colored banner:
+Every first look opens with a parseable verdict line the UI renders as a
+colored banner. There is deliberately **no "you're fine" level** — a photo
+can't rule anything out:
 
-- 🟢 **GOOD GUY** — harmless or beneficial
-- 🔴 **BAD GUY** — venomous, toxic, or dangerous to people or pets
-- 🟠 **CAUTION** — can't tell confidently (look-alikes), or painful but not
-  dangerous
+- 🔴 **GET CARE NOW** (`URGENT`) — waiting is the mistake: shingles near the
+  72-hour antiviral window, cellulitis, a bullseye rash, an animal bite
+- 🟠 **SEE A DOCTOR SOON** (`SOON`) — next day or two: an atypical mole, a
+  blistering burn, impetigo, a dark streak under a nail
+- 🟡 **WORTH A LOOK** (`WATCH`) — get a professional opinion; keep an eye on
+  it: an ordinary mole (always with the ABCDE self-check), hives, a lipoma
+- 🔵 **USUALLY MINOR** (`ROUTINE`) — self-care guidance, always ending with
+  the specific triggers that mean see a clinician after all
 
-## The model never decides whether something is dangerous
+**This app is NOT A DOCTOR.** It never diagnoses. It tells you what the
+finding *fits*, what self-care is standard, and — most importantly — what a
+clinician would want you to escalate for. Every verdict carries that
+disclaimer, and emergencies are always routed to 911 / Poison Control.
 
-This is the core design, and it came from a real failure: asked about a
-daylily, the on-device model identified it perfectly and then said it was
-**"safe for cats."** Lilies cause fatal kidney failure in cats. A 4-bit 4B
-model has excellent eyes and a lossy memory — freestyle toxicology from *any*
-LLM's weights is a bad idea, and from a quantized 4B it's dangerous.
+## The model never decides how serious anything is
+
+This is the core design, inherited from a real failure in the parent app
+([good-guy-bad-guy](https://github.com/clawdbotatg/good-guy-bad-guy)): a
+4-bit 4B model identified a daylily perfectly and then declared it "safe for
+cats" — lethally wrong. Small models have excellent eyes and a lossy memory.
+Freestyle medicine from *any* LLM's weights is a bad idea; from a quantized
+4B it's dangerous.
 
 So the app is two stages:
 
-1. **The model is the eyes.** It sees the photo and returns only an
-   identification — `CATEGORY / ID / FEATURES`. It is forbidden from saying
-   anything is dangerous or safe.
-2. **A curated danger table is the encyclopedia.** Bundled in the app (works
-   at zero bars), it maps species → verdict → a hand-written, factual note
-   that's printed verbatim. Venomous snakes, spiders and scorpions; the
-   plants that kill pets; deadly mushrooms; disease-carrying insects.
+1. **The model is the eyes.** It sees the photo and returns only a short
+   name of the visible finding ("ringworm", "blistering burn", "dark raised
+   mole"). It is forbidden from saying anything is serious or harmless.
+2. **A curated triage corpus is the encyclopedia.** ~90 entries bundled in
+   the app (works at zero bars) map findings → triage level → a
+   hand-written note, drawn from public AAD / Mayo Clinic / CDC / AAO
+   guidance, printed verbatim. Each entry carries its source.
 
-The table's safety posture, in order:
+The corpus's safety posture, in order:
 
-- The **most specific** match wins ("wolf spider" doesn't trip the *wolf*
-  entry), and ties break **toward danger** ("milk snake, a coral snake mimic"
-  → BAD GUY).
-- **No match** on a snake, spider, scorpion, plant, or mushroom → **CAUTION**.
-  A small model failing to recognize something is *not* evidence it's safe.
-- **Wild mushrooms are never GOOD GUY.** Deadly species have edible twins.
-- A hedged `(uncertain)` identification downgrades GOOD GUY to CAUTION.
-- If the table ever fails to load, *everything* falls through to CAUTION.
+- The **most specific** match wins ("fever blister" — a cold sore — doesn't
+  trip the *blister* entry), and ties break **toward care**.
+- An ambiguous ID ("cold sore **or** impetigo") escalates to the **worst**
+  matched level — a photo can't tell look-alikes apart.
+- **No match is never ROUTINE.** Unrecognized bites, burns, wounds, and eye
+  findings default to SEE A DOCTOR SOON; everything else to WORTH A LOOK.
+  A small model failing to recognize something is *not* evidence it's minor.
+- **Moles are never ROUTINE**, even on a match — no photo rules out
+  melanoma, so every pigmented verdict carries the ABCDE self-check.
+- A hedged `(uncertain)` identification downgrades ROUTINE to WATCH; hedging
+  never *rescues* a serious match ("possibly melanoma" stays URGENT).
+- If the corpus ever fails to load, *everything* falls through to the
+  cautious defaults.
 
-`python3 tools/check_danger_table.py` runs 34 safety cases against the table
-with no phone or GPU required — including the daylily that started all this.
-
-**Still: it's one photo and a small model. Treat a verdict as a first
-opinion, never as permission to touch, handle, or eat anything.**
+`python3 tools/check_triage_table.py` runs 55 safety cases against the
+corpus with no phone or GPU required.
 
 Also on board: on-device speech-to-text (mic button), and a `get_location`
-tool the model can call so "brown snake" resolves differently in Texas vs.
-Australia (location never leaves the phone).
+tool the model can call for regional context on bites (location never leaves
+the phone).
+
+## Privacy is the product
+
+- A photo taken in-app uses the system camera **without saving to your
+  photo library** and is held only in memory.
+- Chats are not persisted. Closing the app forgets everything.
+- No accounts, no analytics, no ads, no third-party SDKs, no network calls
+  after the one-time model download. See [PRIVACY.md](PRIVACY.md).
 
 ## Stack
 
-- **SwiftUI** (iOS 17+) — chat UI with streaming tokens + verdict banners
+- **SwiftUI** (iOS 17+) — photo-first chat UI with streaming tokens +
+  triage banners
 - **[mlx-swift-lm](https://github.com/ml-explore/mlx-swift-lm)** — model
   implementations + `ChatSession` (multi-turn history, streaming, tools)
 - **swift-huggingface / swift-transformers** — weights download + tokenizer
 - **XcodeGen** — `project.yml` is the source of truth; the `.xcodeproj` is
   generated (and committed for convenience)
 
-Forked from [clawd-mobile-app](https://github.com/clawdbotatg/clawd-mobile-app)
-(general on-device assistant with the full phone-tool belt).
+Forked from [good-guy-bad-guy](https://github.com/clawdbotatg/good-guy-bad-guy)
+(same architecture pointed at wildlife), itself forked from
+[clawd-mobile-app](https://github.com/clawdbotatg/clawd-mobile-app).
 
 ## Build & run
 
@@ -81,12 +111,12 @@ Forked from [clawd-mobile-app](https://github.com/clawdbotatg/clawd-mobile-app)
    sudo xcode-select -s /Applications/Xcode.app
    ```
 2. **Generate the project** (only needed after editing `project.yml`; a
-   generated `GoodGuyBadGuy.xcodeproj` is already committed):
+   generated `LocalMD.xcodeproj` is already committed):
    ```sh
    brew install xcodegen
    xcodegen generate
    ```
-3. **Open `GoodGuyBadGuy.xcodeproj`**, select the *GoodGuyBadGuy* target →
+3. **Open `LocalMD.xcodeproj`**, select the *LocalMD* target →
    *Signing & Capabilities* → pick your team.
 4. **Run on a real iPhone** (plugged in, or Wi-Fi debugging). MLX needs an
    Apple-silicon GPU — the simulator is not a useful target. iPhone 13 or
@@ -94,16 +124,16 @@ Forked from [clawd-mobile-app](https://github.com/clawdbotatg/clawd-mobile-app)
 
 > If signing complains about the *Increased Memory Limit* entitlement on your
 > account, delete it in Signing & Capabilities (or from
-> `GoodGuyBadGuy/GoodGuyBadGuy.entitlements`).
+> `LocalMD/LocalMD.entitlements`).
 
 ## Agent loop (build → run → see, no hands)
 
 `tools/simloop.sh [out.png]` builds the app, boots an iPhone simulator,
 installs + launches the app, and writes a screenshot — so an agent (or CI)
 can verify changes visually without a human clicking Run. The simulator uses
-`MockEngine` (canned verdict reply); real-model verification needs a physical
-iPhone. `tools/pulllog.sh` pulls the on-device debug log off a paired phone
-without a console attach.
+`MockEngine` (canned bullseye-rash reply through the real triage table);
+real-model verification needs a physical iPhone. `tools/pulllog.sh` pulls
+the on-device debug log off a paired phone without a console attach.
 
 ## How it works
 
@@ -111,27 +141,32 @@ without a console attach.
   top of an `LLMEngine` protocol with two implementations:
   - **`MLXEngine`** (device builds): `#huggingFaceLoadModelContainer`
     downloads/caches weights and returns a `ModelContainer`. A photo turn
-    collects the identification in full, runs `DangerTable.verdict()`, and
-    emits the composed verdict; text turns stream normally.
+    collects the identification, runs `TriageTable.verdict()`, and emits the
+    composed verdict; text turns stream normally.
   - **`MockEngine`** (simulator builds): MLX can't run in the simulator (no
     Metal GPU), so the *vision* stage is faked — but its canned
-    identification goes through the same `DangerTable`, making the simulator
+    identification goes through the same `TriageTable`, making the simulator
     a real regression test for the verdict logic.
-- `DangerTable` + `DangerData` are the safety authority; `MLXEngine` is
-  forbidden from making safety claims. The app composes the
-  `VERDICT: GOOD GUY | BAD GUY | CAUTION` line, so the model can't garble it.
+- `TriageTable` + `TriageData` are the medical authority; `MLXEngine` is
+  forbidden from making severity claims. The app composes the
+  `VERDICT: URGENT | SOON | WATCH | ROUTINE` line, so the model can't
+  garble it.
 - Qwen's `<think>…</think>` reasoning blocks are stripped before parsing.
 - `MLX.GPU.set(cacheLimit:)` + the increased-memory-limit entitlement keep
   the model inside iOS's per-app memory budget.
 
 ## Roadmap ideas
 
-Offline is the product; online is a bonus that may only **narrow or escalate**
-a verdict, never downgrade one to GOOD without curated backing.
+On-device-offline is the product. Nothing may ever downgrade a verdict
+without curated backing shipped in the app.
 
-- Online second opinion: a frontier model refines the species ID when there's
-  signal, still checked against the table
-- Regional priors: use `get_location` to weight species by where you are
-- One-tap verdict history ("field journal" of everything you've scanned)
-- Share sheet extension: verdict any photo from Photos
-- Haptics + sound on BAD GUY
+- **Grow the corpus** — the knowledge bank is the product; hundreds more
+  sourced entries (pediatric findings, wound-care depth, medication rashes)
+- **Private timeline** — opt-in, Face-ID-gated, encrypted local storage to
+  compare a mole or a healing wound over time (the one feature cloud apps
+  can't do honestly)
+- App-switcher snapshot blurring for sensitive content
+- "What to tell your doctor" export — a text summary (never the photo) you
+  choose to share
+- Symptom-context follow-ups: curated question flows ("does it itch?") that
+  refine the triage level using table rules, not model opinions

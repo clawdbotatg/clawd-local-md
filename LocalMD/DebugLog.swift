@@ -1,21 +1,21 @@
 import Foundation
 
-/// Append-only debug log at `Documents/goodguybadguy.log`, so an agent can pull
+/// Append-only debug log at `Documents/localmd.log`, so an agent can pull
 /// it off the device without a console attach:
 ///
 ///   xcrun devicectl device copy from --device <udid> \
-///     --domain-type appDataContainer --domain-identifier com.clawd.goodguybadguy \
-///     --source Documents/goodguybadguy.log --destination <local>
+///     --domain-type appDataContainer --domain-identifier com.clawd.localmd \
+///     --source Documents/localmd.log --destination <local>
 ///
-/// (see tools/pulllog.sh). Rotates to goodguybadguy.prev.log on each launch.
+/// (see tools/pulllog.sh). Rotates to localmd.prev.log on each launch.
 /// Also mirrors to print() for `devicectl … launch --console` runs.
 enum DebugLog {
-    private static let queue = DispatchQueue(label: "goodguybadguy.debuglog")
+    private static let queue = DispatchQueue(label: "localmd.debuglog")
 
     private static let url: URL = {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let url = docs.appendingPathComponent("goodguybadguy.log")
-        let prev = docs.appendingPathComponent("goodguybadguy.prev.log")
+        let url = docs.appendingPathComponent("localmd.log")
+        let prev = docs.appendingPathComponent("localmd.prev.log")
         try? FileManager.default.removeItem(at: prev)
         try? FileManager.default.moveItem(at: url, to: prev)
         FileManager.default.createFile(atPath: url.path, contents: nil)
@@ -29,7 +29,7 @@ enum DebugLog {
     }()
 
     static func log(_ message: String) {
-        print("[GoodGuyBadGuy] \(message)")
+        print("[LocalMD] \(message)")
         let line = "\(formatter.string(from: Date())) \(message)\n"
         queue.async {
             if let handle = try? FileHandle(forWritingTo: url) {

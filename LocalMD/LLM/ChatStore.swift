@@ -192,7 +192,7 @@ final class ChatStore {
     func send(_ text: String, image: UIImage? = nil) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !isGenerating, !trimmed.isEmpty || image != nil else { return }
-        let prompt = trimmed.isEmpty ? "Good guy or bad guy?" : trimmed
+        let prompt = trimmed.isEmpty ? "Should I worry about this?" : trimmed
 
         messages.append(ChatMessage(role: .user, text: prompt, image: image))
         messages.append(ChatMessage(role: .assistant, text: ""))

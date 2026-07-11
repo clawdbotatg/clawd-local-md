@@ -22,10 +22,10 @@ protocol LLMEngine {
 
 /// Simulator/test stand-in: MLX needs a real GPU, so the vision stage is
 /// faked. Everything downstream is the real thing — the canned identification
-/// goes through the same `DangerTable` the device uses, which makes the
+/// goes through the same `TriageTable` the device uses, which makes the
 /// simulator a genuine regression test for the verdict logic. The stand-in
-/// species is the daylily, because the model itself once called it "safe for
-/// cats" and the table must override that to BAD GUY.
+/// finding is a bullseye rash, because early Lyme disease is exactly the
+/// case where a curated URGENT verdict earns its keep.
 @MainActor
 final class MockEngine: LLMEngine {
     private var modelID = BrainCatalog.defaultID
@@ -33,8 +33,8 @@ final class MockEngine: LLMEngine {
     /// then instant, mirroring the device's on-disk cache.
     private var downloaded: Set<String> = []
 
-    /// What the device's naming pass would return; runs the real DangerTable.
-    private static let cannedName = "Daylily"
+    /// What the device's naming pass would return; runs the real TriageTable.
+    private static let cannedName = "Bullseye rash"
 
     var modelName: String { BrainCatalog.displayName(for: modelID) }
 
@@ -71,7 +71,7 @@ final class MockEngine: LLMEngine {
                 continuation.yield("ID: \(Self.cannedName)\n")
                 try? await Task.sleep(for: .milliseconds(900))
                 continuation.yield(
-                    DangerTable.verdict(name: Self.cannedName, category: "plant").text)
+                    TriageTable.verdict(name: Self.cannedName, category: "rash").text)
                 continuation.finish()
             }
             continuation.onTermination = { _ in task.cancel() }

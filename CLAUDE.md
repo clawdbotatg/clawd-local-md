@@ -1,84 +1,94 @@
-# Good Guy Bad Guy — orientation for Claude
+# Local MD — orientation for Claude
 
-iOS app that answers one question from a photo: **is this critter dangerous?**
-A fork of [clawd-mobile-app](https://github.com/clawdbotatg/clawd-mobile-app)
-(ClawdChat) — same SwiftUI + [mlx-swift-lm](https://github.com/ml-explore/mlx-swift-lm)
-3.x on-device stack, downloads `mlx-community/Qwen3-VL-4B-Instruct-4bit`
-(~2.7 GB) on first launch, then runs fully offline. `README.md` has the
-architecture; this file is the working state.
+iOS app that gives one thing from a photo: **a private, on-device medical
+first look — NOT a diagnosis.** A fork of
+[good-guy-bad-guy](https://github.com/clawdbotatg/good-guy-bad-guy) (same
+SwiftUI + [mlx-swift-lm](https://github.com/ml-explore/mlx-swift-lm) 3.x
+on-device stack, downloads `mlx-community/Qwen3-VL-4B-Instruct-4bit`
+(~2.7 GB) on first launch, then runs fully offline), pointed at health
+findings instead of critters. `README.md` has the architecture; this file is
+the working state.
 
-## The one architectural rule: the model never decides danger
+## The one architectural rule: the model never decides severity
 
-**The model is the eyes; `DangerTable` is the encyclopedia.** A 4-bit 4B VLM
-sees well and recalls long-tail facts badly — on device it identified a
-daylily correctly and then declared it "safe for cats," which is lethally
-wrong (lilies cause fatal feline kidney failure). So:
+**The model is the eyes; the triage corpus is the encyclopedia.** A 4-bit 4B
+VLM sees well and recalls long-tail facts badly — the parent app watched it
+declare a daylily "safe for cats" (lethally wrong). In a medical app that
+failure mode is a missed melanoma or a reassured cellulitis. So:
 
-- **Stage 1 (`MLXEngine.identifyInstructions`)**: the model gets the photo and
-  returns ONLY `CATEGORY: / ID: / FEATURES:`. It is explicitly forbidden from
-  saying anything is dangerous or safe.
-- **Stage 2 (`DangerTable.verdict`)**: pure Swift + curated data decides the
-  verdict and prints its `note` verbatim. Rules: most **specific** alias wins
-  (so "wolf spider" doesn't hit the `wolf` entry) with severity breaking ties
-  toward danger; no match on snake/spider/scorpion/plant/mushroom/other →
-  CAUTION (a small model's silence is not evidence of safety); wild mushrooms
-  are never GOOD GUY; a hedged `(uncertain)` GOOD is downgraded to CAUTION;
-  a JSON decode failure empties the table and everything falls to CAUTION.
-- Text follow-ups use `followupInstructions` and are told the printed verdict
-  is authoritative and not to invent new toxicity claims.
+- **Stage 1 (`MLXEngine.nameInstructions`)**: the model gets the photo and
+  returns ONLY a short name of the visible finding. It is explicitly
+  forbidden from saying anything is serious or harmless, or giving advice.
+- **Stage 2 (`TriageTable.verdict`)**: pure Swift + curated data decides the
+  verdict and prints its `note` verbatim. Four levels, worst first: URGENT >
+  SOON > WATCH > ROUTINE — and **there is deliberately no "all clear"**.
+  Rules: most **specific** alias wins ("fever blister" ≠ the `blister`
+  entry) with severity breaking ties toward care; an ambiguous ID ("X or Y")
+  spanning levels escalates to the worst match; no match is never ROUTINE
+  (bite/burn/wound/eye miss → SOON, everything else → WATCH); **moles are
+  never ROUTINE** even on a match (ABCDE self-check is appended — the
+  mushroom rule of dermatology); a hedged ROUTINE downgrades to WATCH but
+  hedging never rescues a serious match; a JSON decode failure empties the
+  table and everything falls to the cautious defaults.
+- Text follow-ups use `followupInstructions` (the NOT A DOCTOR persona) and
+  are told the printed verdict is authoritative — never soften it, never
+  invent diagnoses or treatments.
 
-**Never route a safety claim through the model.** If you want richer verdicts,
-add entries to `DangerData.swift`, don't loosen the prompt.
+**Never route a severity claim through the model.** Richer verdicts mean
+more entries in `TriageData.swift` — with a `source` tag (AAD, Mayo Clinic,
+CDC, AAO) on every entry — never a looser prompt. Anything that could
+downgrade a verdict must have curated backing shipped in the app.
 
-`python3 tools/check_danger_table.py` is the regression test (34 cases, no
+`python3 tools/check_triage_table.py` is the regression test (55 cases, no
 phone/GPU needed — it mirrors the Swift matcher over the embedded JSON). It
-encodes bugs already hit: daylily, plural "lilies", peace lily vs true lily,
-wolf spider vs wolf, "ant" inside "plant". **Run it before shipping any table
-or matcher change**, and add the case that motivated your change.
+encodes the safety posture: mole floor, look-alike escalation, hedge rules,
+specificity traps ("cystic acne" vs "cyst", "pimple with pus" vs "pus").
+**Run it before shipping any corpus or matcher change**, and add the case
+that motivated your change. Corpus alias hygiene: lowercase, ≥3 chars, no
+duplicates, and never a generic bare word ("rash", "bump", "cut", "burn") —
+generics must fall to the category default, not a random entry.
 
-## What else differs from the ClawdChat parent
+## Why this app exists (positioning — keep it honest)
 
-- **Verdict UI**: `ChatMessage.verdict`/`.bodyText` parse the leading
-  `VERDICT:` line (BAD checked first so muddled lines err red);
-  `MessageBubble` renders a green/red/orange banner plus a standing
-  disclaimer. Since the app composes that line, the model can no longer
-  garble it.
-- **Image-first**: a photo auto-sends on capture/pick — the picture is the
-  question. The composer stays hidden until the first verdict, then appears
-  for follow-ups (`ChatView`).
-- **The Brain (swappable model)**: a persistent title + `BrainView` section
-  sit above a content area that swaps between the photo prompt and the chat.
-  `BrainCatalog` (no MLX import, so it compiles for the simulator too) is a
-  curated list of phone-viable VLMs; `MLXEngine.configuration(for:)` maps an
-  id to a `ModelConfiguration` with the right stop tokens (Qwen `<|im_end|>`,
-  Gemma `<end_of_turn>` — omit them and the model never stops). `ChatStore`
-  owns `currentModelID` + `downloadedModelIDs` (persisted in UserDefaults),
-  and `selectModel` reloads the brain and starts a fresh scan. Switching sets
-  `container = nil` in the engine so ARC frees the old weights before the new
-  ones load. Curated on purpose: an arbitrary repo id may not be a VLM, may
-  not route, or (8B Qwen) may load then jetsam-die. Screenshot hooks:
-  `GGBG_DEMO=1` auto-sends a photo, `GGBG_BRAIN_OPEN=1` starts the Brain
-  expanded.
-- **Tools pruned to offline-only**: `get_location` (region → species priors,
-  in `MoreTools`) + `get_device_status` (date → season, in `PhoneTools`).
-  WebTools, contacts, calendar, reminders, steps, clipboard, weather are
-  deleted — the app must work with zero bars, and a 4B model tool-disciplines
-  better with 2 tools than 10.
-- Names: target `GoodGuyBadGuy`, bundle `com.clawd.goodguybadguy`, display
-  name "Good Guy?", debug log `Documents/goodguybadguy.log`.
+"NOT A DOCTOR, a private first look." The photo never leaves the phone,
+never touches the photo library (in-app camera → memory → MLX → gone), and
+nothing is persisted. That's a claim cloud health apps structurally can't
+make, and it's also the App Review strategy: guideline 1.4.1 scrutinizes
+diagnosis claims — this app makes none, shows a standing disclaimer under
+every verdict, and routes emergencies to 911/Poison Control. Don't add
+diagnosis language anywhere (UI, prompts, App Store copy), and don't name a
+specific disease as a conclusion — the corpus says what a finding "fits" and
+when to be seen.
 
-Keep the fork lean: if a change isn't about photo→verdict, it probably
-belongs in the parent repo instead.
+## What differs from the good-guy-bad-guy parent
+
+- **Verdict UI**: `ChatMessage.Verdict` = urgent/soon/watch/routine; parser
+  checks URGENT first so muddled lines err toward care. `MessageBubble`
+  banners: GET CARE NOW (red) / SEE A DOCTOR SOON (orange) / WORTH A LOOK
+  (yellow, black text) / USUALLY MINOR (blue — deliberately not green).
+  Standing NOT A DOCTOR disclaimer with 911/Poison Control numbers.
+- **Corpus** (`TriageData.swift`): ~93 entries across rash / mole / growth /
+  bite / burn / wound / blister / swelling / nail / eye / mouth / scalp /
+  other. Every note ends with escalation triggers. This corpus IS the
+  product — growing it (sourced, conservative, tested) is the roadmap.
+- **Mock/demo**: `MockEngine` cans "Bullseye rash" → real TriageTable →
+  URGENT banner (early Lyme is the flagship curation case). Demo hooks:
+  `LMD_DEMO=1` auto-sends a photo, `LMD_BRAIN_OPEN=1` starts the Brain
+  expanded. NOTE: the bundled DemoPhoto asset is still the parent's daylily
+  art — replace with rash art before using demo screenshots for the store.
+- Names: target `LocalMD`, bundle `com.clawd.localmd`, display name
+  "Local MD", debug log `Documents/localmd.log`.
+- Everything else (Brain switcher via `BrainCatalog`, image-first flow with
+  hidden composer, offline-only tools `get_location` + `get_device_status`,
+  fresh-ChatSession-per-turn) is inherited unchanged — see the parent's
+  CLAUDE.md notes below.
 
 ## Fully on-device — no cloud, ever
 
-There was briefly a cloud brain (a classifier service on a personal box)
-routed from the app; it was **removed entirely in 2026-07** for the App Store
-release — the app is 100% on-device and offline, and that's the product.
-**Do not reintroduce any network path for identification or verdicts.** The
-only acceptable seam for future enrichment remains `DangerTable.verdict`
-running on curated local data — anything that could downgrade a BAD/CAUTION
-to GOOD must have curated backing shipped in the app.
+Inherited as a hard rule: **do not introduce any network path for
+identification or verdicts.** For a health app this is doubly binding — a
+photo of someone's body must never leave the device. The only acceptable
+seam for enrichment is `TriageTable.verdict` over curated local data.
 
 ## Build / deploy loop (all CLI, no Xcode GUI)
 
@@ -88,10 +98,10 @@ Identical to the parent — same device, same team, same flags:
   (xcode-select still points at CommandLineTools; that's fine).
 - **Simulator**: `tools/simloop.sh out.png` — build, boot, install, launch,
   screenshot (MockEngine in the sim; MLX needs a real GPU). Read the
-  screenshot to verify UI. The mock streams a canned BAD GUY verdict when an
+  screenshot to verify UI. The mock streams a canned URGENT verdict when an
   image is attached, so the banner is testable in the sim.
-- **Device build**: `xcodebuild -project GoodGuyBadGuy.xcodeproj -scheme
-  GoodGuyBadGuy -destination 'generic/platform=iOS' -derivedDataPath build
+- **Device build**: `xcodebuild -project LocalMD.xcodeproj -scheme LocalMD
+  -destination 'generic/platform=iOS' -derivedDataPath build
   -skipPackagePluginValidation -skipMacroValidation -allowProvisioningUpdates
   DEVELOPMENT_TEAM=XX7QP5899Z build`
   (the two -skip flags are required headless: mlx-swift's CudaBuild plugin and
@@ -99,20 +109,20 @@ Identical to the parent — same device, same team, same flags:
 - **Install + launch**: `xcrun devicectl device install app --device
   8B053FBC-B638-548F-B045-F5DDE25D3BDD <path>.app` then
   `… device process launch --terminate-existing --device <udid>
-  com.clawd.goodguybadguy`. **Both fail while the phone is locked** — ask the
+  com.clawd.localmd`. **Both fail while the phone is locked** — ask the
   user to unlock, retry in a loop. `tools/pulllog.sh` pulls the debug log.
 - This app has its own container: first launch re-downloads the weights even
-  if ClawdChat is installed (HF cache is per-app). Reinstalling over the top
-  preserves them.
+  if ClawdChat/GGBG is installed (HF cache is per-app). Reinstalling over
+  the top preserves them.
 
 ## Conventions / gotchas (inherited — still true)
 
 - `project.yml` (XcodeGen) is the source of truth; `xcodegen generate` after
   editing and **commit the regenerated `.xcodeproj` together with it** — a
   stale project file silently drops new source files.
-- Model swaps: `MLXEngine.model`. 4B-4bit is the practical phone model — the
-  8B loads on a 12 GB phone but jetsam kills it at first generation
-  (verified 2026-07-07 in the parent).
+- Model swaps: `MLXEngine.modelID` via `BrainCatalog`. 4B-4bit is the
+  practical phone model — the 8B loads on a 12 GB phone but jetsam kills it
+  at first generation (verified 2026-07-07 in the grandparent).
 - Fresh `ChatSession` per turn + replayed `history`: KV-cache reuse across
   turns is broken for Qwen3-VL in mlx-swift-lm 3.31.4 (hangs/corruption).
   Don't "optimize" it back.
@@ -120,5 +130,11 @@ Identical to the parent — same device, same team, same flags:
   real byte fraction stalls near 1% — the loading screen shows a time-based
   sweep instead. Don't "fix" it back to raw fraction.
 - Do not add an API-based fallback; on-device-offline is the entire point.
-- Verdict format changes must update BOTH `MLXEngine.instructions` and the
-  `ChatMessage` parser (and `MockEngine`'s canned reply).
+- Verdict format changes must update `MLXEngine` prompts, the `ChatMessage`
+  parser, `TriageTable.compose`, `MockEngine`'s canned reply, AND
+  `tools/check_triage_table.py` — they are one contract.
+- App icon + loading art (`ExplorerScene`) are still the parent's cartoon
+  critter art — needs a medical rebrand before any store submission.
+
+Keep the fork lean: if a change isn't about photo → private first look, it
+probably belongs in the parent repo instead.

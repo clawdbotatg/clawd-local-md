@@ -1,4 +1,4 @@
-name: GoodGuyBadGuy
+name: LocalMD
 options:
   bundleIdPrefix: com.clawd
   deploymentTarget:
@@ -17,11 +17,11 @@ packages:
     from: 1.3.0
 
 targets:
-  GoodGuyBadGuy:
+  LocalMD:
     type: application
     platform: iOS
     sources:
-      - GoodGuyBadGuy
+      - LocalMD
     dependencies:
       - package: mlx-swift-lm
         product: MLXLLM
@@ -36,9 +36,9 @@ targets:
       - package: swift-transformers
         product: Tokenizers
     info:
-      path: GoodGuyBadGuy/Info.plist
+      path: LocalMD/Info.plist
       properties:
-        CFBundleDisplayName: Good Guy?
+        CFBundleDisplayName: Local MD
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -50,21 +50,21 @@ targets:
         NSSpeechRecognitionUsageDescription: >-
           Transcribes your voice to text entirely on this device.
         NSCameraUsageDescription: >-
-          Take a photo of a creature or plant so the on-device model can tell
-          you if it's dangerous. Photos never leave your phone.
+          Take a photo of the skin or body area you're wondering about. It is
+          analyzed entirely on this iPhone — it never leaves your phone and is
+          never saved to your photo library.
         NSLocationWhenInUseUsageDescription: >-
-          Lets the identifier narrow species down by region (a "brown snake"
-          means different things in Texas vs. Australia). Location never
-          leaves your phone.
+          Optional: gives bites and rashes regional context (ticks and certain
+          spiders are regional). Location never leaves your phone.
     entitlements:
-      path: GoodGuyBadGuy/GoodGuyBadGuy.entitlements
+      path: LocalMD/LocalMD.entitlements
       properties:
         # Lets iOS grant the app more RAM than the default per-app ceiling —
         # needed headroom for the model weights + KV cache.
         com.apple.developer.kernel.increased-memory-limit: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.clawd.goodguybadguy
+        PRODUCT_BUNDLE_IDENTIFIER: com.clawd.localmd
         SWIFT_VERSION: "5.0"
         CODE_SIGN_STYLE: Automatic
         # iPhone-only for v1: no iPad layout pass or iPad screenshots needed

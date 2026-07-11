@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct GoodGuyBadGuyApp: App {
+struct LocalMDApp: App {
     @State private var store = ChatStore()
 
     var body: some Scene {

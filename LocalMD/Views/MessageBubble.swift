@@ -24,10 +24,10 @@ struct MessageBubble: View {
                 if message.role == .assistant, message.identification != nil,
                     message.verdict == nil
                 {
-                    // Named it; now looking the name up in the danger table.
+                    // Named it; now looking the name up in the triage table.
                     HStack(spacing: 6) {
                         ProgressView().controlSize(.small)
-                        Text("Checking if it's dangerous…").foregroundStyle(.secondary)
+                        Text("Checking the medical list…").foregroundStyle(.secondary)
                     }
                 } else if message.isThinking && message.bodyText.isEmpty {
                     HStack(spacing: 6) {
@@ -83,11 +83,11 @@ struct MessageBubble: View {
         .padding(.bottom, 2)
     }
 
-    /// Shown under every verdict. Photo ID can be wrong — look-alikes are the
-    /// whole hazard — so the app never implies permission to touch or eat.
+    /// Shown under every verdict. A photo first look can be wrong in both
+    /// directions, so the app never implies a diagnosis or an all-clear.
     private var disclaimer: some View {
         Text(
-            "AI identification from one photo. It can be wrong — check the ID above, and never touch, handle, or eat anything based on this. In an emergency call poison control or a vet."
+            "NOT A DOCTOR. This is an on-device first look, not a diagnosis — AI can be wrong, and a photo can't rule anything out. When in doubt, see a clinician. Emergencies: call 911; poisoning: 1-800-222-1222."
         )
         .font(.caption2)
         .foregroundStyle(.secondary)
@@ -97,16 +97,18 @@ struct MessageBubble: View {
     private func verdictBanner(_ verdict: ChatMessage.Verdict) -> some View {
         let (label, icon, color): (String, String, Color) =
             switch verdict {
-            case .goodGuy: ("GOOD GUY", "checkmark.shield.fill", .green)
-            case .badGuy: ("BAD GUY", "exclamationmark.triangle.fill", .red)
-            case .caution: ("CAUTION", "questionmark.diamond.fill", .orange)
+            case .urgent: ("GET CARE NOW", "cross.circle.fill", .red)
+            case .soon: ("SEE A DOCTOR SOON", "calendar.badge.exclamationmark", .orange)
+            case .watch: ("WORTH A LOOK", "eye.circle.fill", .yellow)
+            case .routine: ("USUALLY MINOR", "checkmark.circle.fill", .blue)
             }
         return HStack(spacing: 8) {
             Image(systemName: icon)
             Text(label)
         }
         .font(.headline.bold())
-        .foregroundStyle(.white)
+        // Yellow needs dark text for contrast; the rest read best in white.
+        .foregroundStyle(verdict == .watch ? Color.black : Color.white)
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .background(color, in: Capsule())

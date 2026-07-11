@@ -16,17 +16,18 @@ import Tokenizers
 /// **A photo is answered in two minimal passes, never one big one.**
 ///
 /// 1. *Name it.* Image + a one-line prompt: "in very few words, what is
-///    this?" Nothing else — no format, no categories, no safety talk. The
-///    answer goes straight to the screen. Asking a 4B model to identify an
-///    animal *and* fill in a `CATEGORY:/ID:/FEATURES:` template in one shot
-///    degrades both jobs: it parroted the template back and stopped naming
-///    things it had previously named correctly (device, 2026-07-09).
-/// 2. *Judge it.* `DangerTable` looks the name up. Only if the species isn't
+///    this?" Nothing else — no format, no categories, no severity talk. The
+///    answer goes straight to the screen. Asking a 4B model to identify a
+///    finding *and* fill in a template in one shot degrades both jobs: the
+///    parent app watched it parrot the template back and stop naming things
+///    it had previously named correctly (device, 2026-07-09).
+/// 2. *Judge it.* `TriageTable` looks the name up. Only if the finding isn't
 ///    in the table does the model get a second, equally tiny question — one
 ///    word for the category — which selects the safe default.
 ///
-/// The model is the eyes; the table is the encyclopedia. It once called a
-/// daylily "safe for cats", which is lethally wrong, so it is never asked.
+/// The model is the eyes; the table is the encyclopedia. This model class
+/// confidently inverts long-tail medical facts, so it is never asked how
+/// serious anything is — that separation is the whole app.
 @MainActor
 final class MLXEngine: LLMEngine {
     /// Which brain runs, as a `BrainCatalog` repo id. The UI switches it via
@@ -53,41 +54,43 @@ final class MLXEngine: LLMEngine {
 
     /// Pass 1. As little context as possible: look, and name it.
     private static let nameInstructions = """
-        Look at the photo and name the animal, plant, or mushroom in it.
+        Look at the photo and name the visible skin or body finding in it.
 
         Answer with the name only — no sentence, no punctuation, no \
-        explanation. Two to six words. Like: Leopard gecko. Or: Cellar \
-        spider. Or: Daylily.
+        explanation. Two to six words. Like: Ringworm. Or: Hives. Or: \
+        Blistering burn. Or: Dark raised mole.
 
-        If it is not a living thing, answer: not a plant or animal
+        If the photo does not show a person's skin or body, answer: not a body part
         If you truly cannot tell, answer: unknown
-        Never say whether it is dangerous or safe.
+        Never say whether it is serious or harmless, and never give advice.
         """
 
-    /// Pass 2, and only when the name isn't already in the danger table: one
+    /// Pass 2, and only when the name isn't already in the triage table: one
     /// word, to pick the safe default.
     private static let categoryInstructions = """
         Answer with exactly one word from this list and nothing else:
-        snake, spider, scorpion, insect, plant, mushroom, mammal, bird, other
+        rash, mole, growth, bite, burn, wound, blister, swelling, nail, eye, mouth, scalp, other
         """
 
     /// Follow-up questions after a verdict has been rendered.
     private var followupInstructions: String {
         """
-        You are Good Guy Bad Guy, a wildlife-safety helper running fully \
+        You are Local MD, a private first-look helper running fully \
         on-device on the user's iPhone (\(modelName) via MLX — no cloud, \
-        photos never leave the phone). The user photographed something and \
-        already received a verdict, shown earlier in this conversation.
+        photos never leave the phone). You are NOT A DOCTOR and you never \
+        diagnose. The user photographed a health concern and already \
+        received a triage verdict, shown earlier in this conversation.
 
         Answer their follow-up briefly — a few sentences, no filler. The \
-        verdict and safety facts already given are authoritative: do not \
-        contradict them, and do not invent new toxicity or venom claims. If \
-        you don't know, say so and tell them to check with a local expert, \
-        poison control, or a vet.
+        verdict and the guidance already given are authoritative: do not \
+        contradict them, do not soften them, and do not invent new medical \
+        claims, diagnoses, or treatments. If you don't know, say so and \
+        tell them a clinician is the right next step.
 
-        Never advise touching, handling, moving, or eating anything. If they \
-        may have been bitten or stung, tell them to seek medical help. If a \
-        pet may have eaten something toxic, tell them to call a vet now.
+        Never tell the user something is safe to ignore. If they mention \
+        fever, spreading, severe pain, trouble breathing, or feeling very \
+        unwell, tell them to seek medical care now. For possible poisoning \
+        mention Poison Control; for emergencies, 911.
         """
     }
 
@@ -218,33 +221,33 @@ final class MLXEngine: LLMEngine {
                         image: image, maxTokens: 32, container: container)
                     DebugLog.log("name pass: \(reply.debugDescription)")
 
-                    if DangerTable.isNotAnOrganism(reply) {
+                    if TriageTable.isNotBodyPhoto(reply) {
                         continuation.yield(
-                            "That doesn't look like a plant or animal. Point the camera at the creature, plant, or mushroom you want checked."
+                            "That doesn't look like a photo of skin or a body area. Retake it with the spot you're wondering about filling the frame, in good light."
                         )
                         self.history = []
                         continuation.finish()
                         return
                     }
 
-                    let name = DangerTable.sanitizeName(reply)
-                    let hedged = DangerTable.isHedged(reply)
+                    let name = TriageTable.sanitizeName(reply)
+                    let hedged = TriageTable.isHedged(reply)
 
                     // Show the identification immediately — the user asked
-                    // what it is, and the danger pass may take a moment.
+                    // what it is, and the triage pass may take a moment.
                     continuation.yield("ID: \(name ?? "Couldn't identify it")\n")
 
-                    // ---- Pass 2: how dangerous is it? ----
+                    // ---- Pass 2: how seriously should it be taken? ----
                     // The table answers directly for anything it knows. Only
                     // an unknown name needs the model's category, and only to
                     // pick the safe default.
                     var category: String?
-                    if let name, DangerTable.lookup(name: name) == nil {
+                    if let name, TriageTable.lookup(name: name) == nil {
                         category = try await self.categorize(name, image: image, container: container)
                         DebugLog.log("category pass: \(category ?? "nil")")
                     }
 
-                    let result = DangerTable.verdict(
+                    let result = TriageTable.verdict(
                         name: name, category: category, hedged: hedged)
                     DebugLog.log(
                         "id=\(name ?? "none") verdict=\(result.verdict.map(String.init(describing:)) ?? "none")")
@@ -253,7 +256,7 @@ final class MLXEngine: LLMEngine {
                     // History carries the verdict the user saw, so follow-ups
                     // reason from those facts.
                     self.history = [
-                        .user("[photo of something the user found]"),
+                        .user("[photo of a health concern the user noticed]"),
                         .assistant("ID: \(name ?? "unidentified")\n\(result.text)"),
                     ]
                     continuation.finish()
@@ -266,7 +269,7 @@ final class MLXEngine: LLMEngine {
     }
 
     /// One-word category, used only to pick the safe default for a name the
-    /// danger table doesn't know.
+    /// triage table doesn't know.
     private func categorize(_ name: String, image: CIImage, container: ModelContainer)
         async throws -> String?
     {
@@ -274,10 +277,10 @@ final class MLXEngine: LLMEngine {
             instructions: Self.categoryInstructions,
             prompt: "This looks like: \(name). Which one word describes it?",
             image: image, maxTokens: 8, container: container)
-        let word = DangerTable.firstMeaningfulLine(reply)?
+        let word = TriageTable.firstMeaningfulLine(reply)?
             .lowercased()
             .trimmingCharacters(in: CharacterSet.letters.inverted)
-        return word.flatMap { DangerTable.categories.contains($0) ? $0 : nil }
+        return word.flatMap { TriageTable.categories.contains($0) ? $0 : nil }
     }
 
     /// Run one short, tool-free, history-free question against the photo.
