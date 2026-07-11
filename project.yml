@@ -67,6 +67,10 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.clawd.localmd
         SWIFT_VERSION: "5.0"
         CODE_SIGN_STYLE: Automatic
+        # Baked in so GUI Xcode (and CLI without flags) can auto-provision;
+        # GGBG passes it per-invocation instead, which leaves the GUI unable
+        # to create the profile.
+        DEVELOPMENT_TEAM: XX7QP5899Z
         # iPhone-only for v1: no iPad layout pass or iPad screenshots needed
         # for App Review (iPads still run it in compatibility mode).
         TARGETED_DEVICE_FAMILY: "1"
