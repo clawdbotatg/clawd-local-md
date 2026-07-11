@@ -144,6 +144,24 @@ enum ToolCallRecovery {
         }.joined(separator: "\n")
     }
 
+    /// The best topic title a dispatched call surfaced — the direct title
+    /// for get_health_topic, or the top search hit — so the engine can fall
+    /// back to printing that topic if the model never composes an answer.
+    static func topicTitle(call: ToolCall, result: String) -> String? {
+        if call.function.name == "get_health_topic",
+            let title = call.function.arguments["title"]?.anyValue as? String
+        {
+            return title
+        }
+        guard call.function.name == "search_health_topics",
+            let data = try? JSONSerialization.jsonObject(with: Data(result.utf8)),
+            let object = data as? [String: Any],
+            let results = object["results"] as? [[String: Any]],
+            let first = results.first?["title"] as? String
+        else { return nil }
+        return first
+    }
+
     /// One-line status shown to the user while a recovered lookup runs —
     /// the clean version of what used to be raw tag spam.
     static func statusLine(for call: ToolCall) -> String {

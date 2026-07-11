@@ -51,6 +51,8 @@ final class ChatStore {
     private var preparing: String?
     private var workerRunning = false
     private var generationTask: Task<Void, Never>?
+    /// When the last token arrived — the stall watchdog's heartbeat.
+    private var lastChunkAt = Date()
 
     private static let modelKey = "brain.currentModelID"
     private static let downloadedKey = "brain.downloadedModelIDs"
@@ -222,22 +224,45 @@ final class ChatStore {
         messages.append(ChatMessage(role: .assistant, text: ""))
         let index = messages.count - 1
         isGenerating = true
+        // Keep the screen awake for the whole turn: 30s auto-lock suspends
+        // the app mid-generation and the reply freezes forever with no
+        // error (watched on device 2026-07-11 — "it never finished").
+        UIApplication.shared.isIdleTimerDisabled = true
         let ciImage = image.flatMap { CIImage(image: $0) }
         DebugLog.log("send: \"\(prompt)\"\(image != nil ? " +image" : "") via \(engine.modelName)")
 
+        lastChunkAt = Date()
         generationTask = Task {
             do {
                 for try await chunk in engine.respond(to: prompt, image: ciImage) {
+                    lastChunkAt = Date()
                     messages[index].text += chunk
                 }
                 DebugLog.log("reply done (\(messages[index].text.count) chars)")
             } catch is CancellationError {
-                DebugLog.log("generation cancelled by user")
+                DebugLog.log("generation cancelled")
             } catch {
                 DebugLog.log("generation error: \(error)")
                 messages[index].text += "\n\n⚠️ \(error.localizedDescription)"
             }
             isGenerating = false
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+        // Watchdog: a turn that stops streaming and never errors (GPU work
+        // frozen by a suspension, a wedged generation) must not spin
+        // forever — kill it and say so, so the user can just ask again.
+        Task { [weak self] in
+            while true {
+                try? await Task.sleep(for: .seconds(20))
+                guard let self, self.isGenerating else { return }
+                if Date().timeIntervalSince(self.lastChunkAt) > 150 {
+                    DebugLog.log("watchdog: generation stalled >150s, cancelling")
+                    self.generationTask?.cancel()
+                    self.messages[index].text +=
+                        "\n\n⚠️ That reply stalled — likely the screen locked or the app went to the background mid-answer. Ask again."
+                    return
+                }
+            }
         }
     }
 

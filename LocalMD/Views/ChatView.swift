@@ -43,10 +43,18 @@ struct ChatView: View {
             }
             // Companion hook: SIMCTL_CHILD_LMD_ASK="what is ringworm" sends
             // a text question, which in the simulator exercises the bundled
-            // HealthCorpus lookup end-to-end (MockEngine answers from it).
+            // HealthCorpus lookup end-to-end (MockEngine answers from it),
+            // and on device (DEVICECTL_CHILD_LMD_ASK) drives the real model
+            // headless. Waits for the brain: sending before load finishes
+            // hits notLoaded (raced on device 2026-07-11).
             if let ask = ProcessInfo.processInfo.environment["LMD_ASK"],
                 !ask.isEmpty, store.messages.isEmpty
             {
+                while true {
+                    if case .ready = store.modelState { break }
+                    if case .failed = store.modelState { return }
+                    try? await Task.sleep(for: .milliseconds(300))
+                }
                 store.send(ask)
             }
         }
@@ -118,8 +126,11 @@ struct ChatView: View {
                         emptyState
                     }
                     ForEach(store.messages) { message in
-                        MessageBubble(message: message)
-                            .id(message.id)
+                        MessageBubble(
+                            message: message,
+                            working: store.isGenerating && message.id == store.messages.last?.id
+                        )
+                        .id(message.id)
                     }
                 }
                 .padding()

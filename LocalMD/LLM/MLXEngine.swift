@@ -338,6 +338,14 @@ final class MLXEngine: LLMEngine {
                 // leaked calls are dispatched here with the turn continued —
                 // up to two recovery rounds, then we stop retrying.
                 var visible = ""
+                // Model-authored prose only (status lines excluded) — if a
+                // turn ends with none, the deterministic library fallback
+                // below fires. A status line alone must not count as an
+                // answer (watched on device 2026-07-11: "snake bite" turn
+                // ended after the 🔎 line and looked hung).
+                var answer = ""
+                // Best topic seen while dispatching, for the fallback.
+                var fallbackTopic: String?
                 var conversation = self.history + [userMessage]
                 do {
                     for round in 1...3 {
@@ -352,17 +360,21 @@ final class MLXEngine: LLMEngine {
                             raw += chunk
                             if let clean = scrubber.pass(chunk), !clean.isEmpty {
                                 visible += clean
+                                answer += clean
                                 continuation.yield(clean)
                             }
                         }
                         if let tail = scrubber.finish(), !tail.isEmpty {
                             visible += tail
+                            answer += tail
                             continuation.yield(tail)
                         }
+                        DebugLog.log(
+                            "round \(round): raw \(raw.count) chars, visible \(answer.count): \(raw.prefix(160).replacingOccurrences(of: "\n", with: "⏎"))"
+                        )
 
                         let leaked = ToolCallRecovery.leakedCalls(in: raw)
                         guard !leaked.isEmpty, round < 3 else { break }
-                        DebugLog.log("recovering \(leaked.count) leaked tool call(s), round \(round)")
 
                         // Show the lookup instead of tag spam, run the tools
                         // ourselves, and replay the turn the way the library
@@ -374,13 +386,19 @@ final class MLXEngine: LLMEngine {
                             let status = ToolCallRecovery.statusLine(for: call) + "\n"
                             visible += status
                             continuation.yield(status)
-                            followup.append(.tool(await Self.dispatchTool(call)))
+                            let result = await Self.dispatchTool(call)
+                            fallbackTopic =
+                                ToolCallRecovery.topicTitle(call: call, result: result)
+                                ?? fallbackTopic
+                            followup.append(.tool(result))
                         }
                         conversation += followup
                     }
-                    if visible.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        let fallback =
-                            "I couldn't finish looking that up. Ask me once more — and if it's urgent, don't wait on an app."
+                    // The model went quiet without answering (EOS straight
+                    // after a lookup, or a truncated tool call). Never leave
+                    // the user hanging: print the library entry itself.
+                    if answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        let fallback = Self.libraryFallback(topicTitle: fallbackTopic)
                         visible += fallback
                         continuation.yield(fallback)
                     }
@@ -393,6 +411,22 @@ final class MLXEngine: LLMEngine {
                 }
             }
         }
+    }
+
+    /// When the model ends a turn without composing any prose, answer from
+    /// the library directly — deterministic, sourced, and always ends with
+    /// an escalation line. Reference text, not a verdict: severity language
+    /// stays MedlinePlus's own.
+    private static func libraryFallback(topicTitle: String?) -> String {
+        guard let topicTitle, let topic = HealthCorpus.topic(named: topicTitle) else {
+            return
+                "I couldn't finish looking that up — ask me once more. If this is severe, sudden, or getting worse, don't wait on an app: get medical care now."
+        }
+        let excerpt = topic.summary.count > 900
+            ? String(topic.summary.prefix(900)) + "…"
+            : topic.summary
+        return
+            "Here's what MedlinePlus (NIH) says about \(topic.title):\n\n\(excerpt)\n\nIf this is severe, sudden, or getting worse, get medical care now — don't wait on an app."
     }
 
     /// Append a finished exchange to the replayed history. Think-blocks are

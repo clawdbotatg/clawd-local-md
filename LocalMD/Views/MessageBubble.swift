@@ -2,6 +2,10 @@ import SwiftUI
 
 struct MessageBubble: View {
     let message: ChatMessage
+    /// True while this message is still being generated — keeps a visible
+    /// "working" pulse on the bubble through silent stretches (model
+    /// thinking, tool lookups) so a slow turn never reads as hung.
+    var working: Bool = false
 
     var body: some View {
         HStack {
@@ -41,6 +45,13 @@ struct MessageBubble: View {
                 } else if !message.bodyText.isEmpty {
                     Text(message.bodyText)
                         .textSelection(.enabled)
+                }
+                if working, !message.bodyText.isEmpty {
+                    HStack(spacing: 6) {
+                        ProgressView().controlSize(.small)
+                        Text("Working…").font(.caption).foregroundStyle(.secondary)
+                    }
+                    .padding(.top, 2)
                 }
                 if message.role == .assistant, message.verdict != nil,
                     !message.bodyText.isEmpty
