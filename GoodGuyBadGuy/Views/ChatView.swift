@@ -215,6 +215,12 @@ struct ChatView: View {
     private var preparingScreen: some View {
         VStack(spacing: 12) {
             Spacer()
+            Image("ExplorerScene")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: 280)
+                .clipShape(RoundedRectangle(cornerRadius: 28))
+                .padding(.bottom, 8)
             ProgressView()
             Text(
                 store.isDownloaded(store.currentModelID)

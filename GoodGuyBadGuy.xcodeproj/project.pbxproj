@@ -19,6 +19,7 @@
 		5E7F14CB01E5D228255BF425 /* MoreTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = D110805D05D0582BD9A34A4E /* MoreTools.swift */; };
 		5ECF5396997BD588B224F266 /* DangerTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14D088071876DCC53C6E9008 /* DangerTable.swift */; };
 		6186DD6461D88855DAEB103D /* BrainCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EFB9F5B3B1BA7CCAFF0E4BF /* BrainCatalog.swift */; };
+		636AA77FF5AAED198E01EE85 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0FFFA87AD63CDE9148C66B5B /* PrivacyInfo.xcprivacy */; };
 		6404AED111A8F1B1B9E3DC7C /* MLXHuggingFace in Frameworks */ = {isa = PBXBuildFile; productRef = A82623C6DD0E6B07178B8125 /* MLXHuggingFace */; };
 		6CE6DE40EA78AC79ABAEEE2C /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = A26BDF9F45B22BFC03626C1C /* MLXLLM */; };
 		72938E55ECB0C5504A28EEC4 /* PhoneTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D8DF9483E37B11A6358E1A2 /* PhoneTools.swift */; };
@@ -34,6 +35,7 @@
 
 /* Begin PBXFileReference section */
 		06B4FE9396A536B0DD6D79DC /* LLMEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMEngine.swift; sourceTree = "<group>"; };
+		0FFFA87AD63CDE9148C66B5B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		14D088071876DCC53C6E9008 /* DangerTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DangerTable.swift; sourceTree = "<group>"; };
 		238D4338CECD33B1B87F0AF0 /* ChatMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMessage.swift; sourceTree = "<group>"; };
 		24A554E68A45977EA030BADC /* BrainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrainView.swift; sourceTree = "<group>"; };
@@ -80,6 +82,7 @@
 				B0CA79CC52C8E1002A94105B /* GoodGuyBadGuy.entitlements */,
 				5F0ECFF5BA578C1103432B88 /* GoodGuyBadGuyApp.swift */,
 				F4A32078779DBCF2C682CC56 /* Info.plist */,
+				0FFFA87AD63CDE9148C66B5B /* PrivacyInfo.xcprivacy */,
 				513029C492554C8B1BD707E6 /* LLM */,
 				15CCC1140112639174C637D9 /* Models */,
 				0E40BAACD94ECFA13E1AC3A1 /* Speech */,
@@ -218,6 +221,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2F7E0F03BF189E760DF02C26 /* Assets.xcassets in Resources */,
+				636AA77FF5AAED198E01EE85 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -263,11 +267,11 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.clawd.goodguybadguy;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -403,11 +407,11 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.clawd.goodguybadguy;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
