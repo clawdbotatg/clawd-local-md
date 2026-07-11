@@ -58,10 +58,21 @@ final class MockEngine: LLMEngine {
         AsyncThrowingStream<String, Error> { continuation in
             let task = Task { @MainActor in
                 guard image != nil else {
-                    continuation.yield(
-                        "Mock simulator engine (MLX needs a real device's GPU). "
-                            + "You asked: “\(prompt)”. On an iPhone the on-device model answers "
-                            + "follow-ups here.")
+                    // Exercise the real bundled corpus, so a simulator run
+                    // proves HealthCorpus.db ships and FTS5 answers — the
+                    // same lookup the device model reaches via its tools.
+                    let hits = HealthCorpus.search(prompt, limit: 3)
+                    if let best = hits.first, let topic = HealthCorpus.topic(named: best.title) {
+                        continuation.yield(
+                            "Mock engine — offline library lookup for “\(prompt)”:\n"
+                                + "Matches: \(hits.map(\.title).joined(separator: " · "))\n\n"
+                                + "\(topic.title)\n\(topic.summary.prefix(400))…\n\n"
+                                + "Source: MedlinePlus (NIH), \(topic.url)")
+                    } else {
+                        continuation.yield(
+                            "Mock engine — no offline library match for “\(prompt)”. "
+                                + "On an iPhone the on-device model answers follow-ups here.")
+                    }
                     continuation.finish()
                     return
                 }

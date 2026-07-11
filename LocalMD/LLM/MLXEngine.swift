@@ -91,6 +91,14 @@ final class MLXEngine: LLMEngine {
         fever, spreading, severe pain, trouble breathing, or feeling very \
         unwell, tell them to seek medical care now. For possible poisoning \
         mention Poison Control; for emergencies, 911.
+
+        You have an offline reference library on this phone: MedlinePlus, \
+        from the NIH. For factual questions — what a condition is, what \
+        usually helps, how to prevent it — call search_health_topics, then \
+        get_health_topic on the best title, and base your answer on what it \
+        says, mentioning MedlinePlus as the source. The library is \
+        reference material only: it never overrides or softens the verdict \
+        above, and if it seems to conflict, the verdict wins.
         """
     }
 
@@ -167,12 +175,13 @@ final class MLXEngine: LLMEngine {
                 repetitionPenalty: 1.15,
                 repetitionContextSize: 64
             ),
-            tools: withTools ? PhoneTools.specs + MoreTools.specs : [],
+            tools: withTools ? CorpusTools.specs + PhoneTools.specs + MoreTools.specs : [],
             toolDispatch: { call in
                 DebugLog.log("tool call: \(call.function.name) args: \(call.function.arguments)")
                 // A stuck tool must never hang the whole reply (the model
                 // waits on this result), so every tool races a 30s deadline.
                 let result = await Self.withDeadline(seconds: 30) {
+                    if let corpusResult = await CorpusTools.dispatch(call) { return corpusResult }
                     if let moreResult = await MoreTools.dispatch(call) { return moreResult }
                     return await PhoneTools.dispatch(call)
                 } ?? #"{"error": "tool timed out after 30 seconds"}"#

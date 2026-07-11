@@ -87,7 +87,7 @@ struct MessageBubble: View {
     /// directions, so the app never implies a diagnosis or an all-clear.
     private var disclaimer: some View {
         Text(
-            "NOT A DOCTOR. This is an on-device first look, not a diagnosis — AI can be wrong, and a photo can't rule anything out. When in doubt, see a clinician. Emergencies: call 911; poisoning: 1-800-222-1222."
+            "NOT A DOCTOR. This is an on-device first look, not a diagnosis — AI can be wrong, and a photo can't rule anything out. When in doubt, see a clinician. Emergencies: call 911; poisoning: 1-800-222-1222. Reference answers draw on MedlinePlus (medlineplus.gov), a service of the NIH's National Library of Medicine, which does not endorse this app."
         )
         .font(.caption2)
         .foregroundStyle(.secondary)

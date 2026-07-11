@@ -76,6 +76,22 @@ when to be seen.
   `LMD_DEMO=1` auto-sends a photo, `LMD_BRAIN_OPEN=1` starts the Brain
   expanded. NOTE: the bundled DemoPhoto asset is still the parent's daylily
   art — replace with rash art before using demo screenshots for the store.
+- **Offline reference library** (`docs/CORPUS.md` is the deep doc): all
+  ~1,016 English MedlinePlus health-topic summaries in a bundled ~4 MB
+  SQLite FTS5 DB (`LocalMD/Resources/HealthCorpus.db`, built by
+  `tools/build_corpus.py`, re-run + recommit each release — NLM asks that
+  copies stay fresh). The model reaches it in **text follow-ups only** via
+  two MCP-style tools (`CorpusTools`: `search_health_topics`,
+  `get_health_topic` over `HealthCorpus.swift`, system SQLite3, read-only).
+  It is REFERENCE, not triage — the tools know nothing about the verdict
+  and the follow-up prompt says the verdict always wins. Licensing:
+  MedlinePlus summaries are public domain (A.D.A.M./ASHP content is
+  copyrighted and never ingested; StatPearls is CC BY-NC-ND — never use).
+  `python3 tools/check_corpus.py` is its regression test (retrieval
+  quality, provenance, FTS-injection safety); its query builder mirrors
+  `HealthCorpus.ftsExpression` — keep them in sync. In the sim, MockEngine
+  answers text follow-ups from the real DB (`SIMCTL_CHILD_LMD_ASK="..."`
+  demo hook), proving bundling + FTS end-to-end.
 - Names: target `LocalMD`, bundle `com.clawd.localmd`, display name
   "Local MD", debug log `Documents/localmd.log`.
 - Everything else (Brain switcher via `BrainCatalog`, image-first flow with

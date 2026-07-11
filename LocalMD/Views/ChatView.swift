@@ -41,6 +41,14 @@ struct ChatView: View {
                     }
                 store.send("", image: image)
             }
+            // Companion hook: SIMCTL_CHILD_LMD_ASK="what is ringworm" sends
+            // a text question, which in the simulator exercises the bundled
+            // HealthCorpus lookup end-to-end (MockEngine answers from it).
+            if let ask = ProcessInfo.processInfo.environment["LMD_ASK"],
+                !ask.isEmpty, store.messages.isEmpty
+            {
+                store.send(ask)
+            }
         }
         .fullScreenCover(isPresented: $showCamera) {
             // A captured photo IS the question — send it immediately.

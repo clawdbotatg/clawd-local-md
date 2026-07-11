@@ -81,6 +81,30 @@ Also on board: on-device speech-to-text (mic button), and a `get_location`
 tool the model can call for regional context on bites (location never leaves
 the phone).
 
+## An offline medical library the model can look things up in
+
+Follow-up questions ("what actually is ringworm?", "how do I keep a burn
+clean?") deserve better than a 4-bit model's memory. So the app bundles a
+**second, much larger reference corpus**: all ~1,000 English
+[MedlinePlus](https://medlineplus.gov) health-topic summaries (NIH's
+consumer-health encyclopedia), packed into a ~4 MB SQLite **FTS5** database
+at build time by `tools/build_corpus.py`.
+
+During text follow-ups the model gets two MCP-style local tools —
+`search_health_topics(query)` (BM25 full-text search over titles, aliases,
+and bodies) and `get_health_topic(title)` (the plain-language summary, with
+its medlineplus.gov provenance URL) — and is instructed to ground factual
+answers in what it reads there, citing MedlinePlus. Zero bars required:
+lookups are pure on-device SQLite.
+
+The severity firewall still holds: the library is **reference, not
+triage**. The tools are only offered on follow-up turns (never during
+identification), they know nothing about the verdict, and the model is told
+the printed verdict always wins over anything it reads.
+`python3 tools/check_corpus.py` regression-tests the bundled DB — schema,
+provenance on every row, retrieval quality, and FTS-injection safety —
+with no phone or GPU required.
+
 ## Privacy is the product
 
 - A photo taken in-app uses the system camera **without saving to your
