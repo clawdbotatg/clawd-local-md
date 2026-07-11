@@ -74,8 +74,8 @@ when to be seen.
 - **Mock/demo**: `MockEngine` cans "Bullseye rash" → real TriageTable →
   URGENT banner (early Lyme is the flagship curation case). Demo hooks:
   `LMD_DEMO=1` auto-sends a photo, `LMD_BRAIN_OPEN=1` starts the Brain
-  expanded. NOTE: the bundled DemoPhoto asset is still the parent's daylily
-  art — replace with rash art before using demo screenshots for the store.
+  expanded. The DemoPhoto asset is cartoon bullseye-rash art matching the
+  canned reply (source: `tools/demophoto.svg`).
 - **Offline reference library** (`docs/CORPUS.md` is the deep doc): all
   ~1,016 English MedlinePlus health-topic summaries in a bundled ~4 MB
   SQLite FTS5 DB (`LocalMD/Resources/HealthCorpus.db`, built by
@@ -94,10 +94,13 @@ when to be seen.
   demo hook), proving bundling + FTS end-to-end.
 - Names: target `LocalMD`, bundle `com.clawd.localmd`, display name
   "Local MD", debug log `Documents/localmd.log`.
-- Everything else (Brain switcher via `BrainCatalog`, image-first flow with
-  hidden composer, offline-only tools `get_location` + `get_device_status`,
-  fresh-ChatSession-per-turn) is inherited unchanged — see the parent's
-  CLAUDE.md notes below.
+- **Chat-first** (departs from the parent's image-first flow): the composer
+  is live as soon as the brain is ready — text/dictation/photo from message
+  one. `followupInstructions` covers both the no-verdict case and the
+  verdict-is-authoritative case.
+- Everything else (Brain switcher via `BrainCatalog`, offline-only tools
+  `get_location` + `get_device_status`, fresh-ChatSession-per-turn) is
+  inherited unchanged — see the parent's CLAUDE.md notes below.
 
 ## Fully on-device — no cloud, ever
 
@@ -143,14 +146,21 @@ Identical to the parent — same device, same team, same flags:
   turns is broken for Qwen3-VL in mlx-swift-lm 3.31.4 (hangs/corruption).
   Don't "optimize" it back.
 - Download progress: the HF snapshot is one giant safetensors file, so the
-  real byte fraction stalls near 1% — the loading screen shows a time-based
-  sweep instead. Don't "fix" it back to raw fraction.
+  real byte fraction sits near 0% for most of the transfer then jumps to 1
+  (watched on device 2026-07-11). `ChatStore.runWorker` therefore shows
+  `max(real, 0.92·(1−e^(−t/180s)))` — a time-based estimate that always
+  moves and never claims done; real progress wins if it's ahead. Don't
+  "fix" it back to the raw fraction.
 - Do not add an API-based fallback; on-device-offline is the entire point.
 - Verdict format changes must update `MLXEngine` prompts, the `ChatMessage`
   parser, `TriageTable.compose`, `MockEngine`'s canned reply, AND
   `tools/check_triage_table.py` — they are one contract.
-- App icon + loading art (`ExplorerScene`) are still the parent's cartoon
-  critter art — needs a medical rebrand before any store submission.
+- App icon + loading art (`ExplorerScene`) + DemoPhoto are robot-doctor /
+  bullseye-rash cartoons. SVG sources live in `tools/` (`icon.svg`,
+  `scene.svg`, `demophoto.svg`); re-render with headless Chrome:
+  `"/Applications/Google Chrome.app/…/Google Chrome" --headless=new
+  --window-size=1024,1024 --screenshot=out.png file://$PWD/tools/icon.svg`
+  (800×800 for the demo photo), then copy into the asset catalogs.
 
 Keep the fork lean: if a change isn't about photo → private first look, it
 probably belongs in the parent repo instead.

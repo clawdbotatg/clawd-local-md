@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+  <!-- Demo photo: cartoon forearm with a bullseye rash (erythema migrans),
+       matching MockEngine's canned "Bullseye rash" -> URGENT Lyme demo -->
+  <rect width="800" height="800" fill="#efe7dc"/>
+  <!-- forearm filling the frame diagonally -->
+  <path d="M-40 620 Q200 420 430 360 Q650 310 860 330 L860 560 Q640 540 450 590 Q240 650 -40 830 Z" fill="#f6c9a0"/>
+  <path d="M-40 620 Q200 420 430 360 Q650 310 860 330" fill="none" stroke="#e5b88f" stroke-width="10" opacity="0.6"/>
+  <!-- wrist crease hints -->
+  <path d="M700 340 Q706 400 700 448" fill="none" stroke="#e5b88f" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+  <path d="M744 336 Q750 396 744 444" fill="none" stroke="#e5b88f" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+  <!-- bullseye rash -->
+  <g transform="translate(400 470)">
+    <circle r="118" fill="#ef9a9a"/>
+    <circle r="112" fill="none" stroke="#e57373" stroke-width="10" opacity="0.8"/>
+    <circle r="78" fill="#f6c9a0"/>
+    <circle r="34" fill="#e57373"/>
+    <circle r="14" fill="#d35b5b"/>
+  </g>
+  <!-- a couple of freckles for texture -->
+  <circle cx="220" cy="600" r="7" fill="#d9a97e"/>
+  <circle cx="560" cy="420" r="6" fill="#d9a97e"/>
+  <circle cx="610" cy="500" r="5" fill="#d9a97e"/>
+</svg>

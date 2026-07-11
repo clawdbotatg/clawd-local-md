@@ -151,8 +151,32 @@ final class ChatStore {
             let cached = downloadedModelIDs.contains(id)
             if prepareProgress[id] == nil { prepareProgress[id] = cached ? 0.9 : 0 }
             engine.setModel(id)
+            // The downloader's byte fraction is useless for the bar: the
+            // snapshot is one giant safetensors file and its Progress sits
+            // near 0% for most of the transfer, then jumps straight to 1
+            // (watched on device 2026-07-11: stuck at 14 MB/3.1 GB, done 12s
+            // later). So a time-based estimate keeps the bar honest-ish and
+            // always moving — asymptotic toward 92%, tuned so a medium-slow
+            // connection (~8 min for 3 GB) tracks roughly: never claims done,
+            // and the real fraction wins whenever it's actually ahead.
+            let started = Date()
+            let estimator: Task<Void, Never>? =
+                cached
+                ? nil
+                : Task { [weak self] in
+                    while !Task.isCancelled {
+                        try? await Task.sleep(for: .milliseconds(400))
+                        guard let self, self.preparing == id else { return }
+                        let elapsed = Date().timeIntervalSince(started)
+                        let estimate = 0.92 * (1 - exp(-elapsed / 180))
+                        self.prepareProgress[id] = max(self.prepareProgress[id] ?? 0, estimate)
+                    }
+                }
+            defer { estimator?.cancel() }
             do {
-                try await engine.load { frac in self.prepareProgress[id] = frac }
+                try await engine.load { frac in
+                    self.prepareProgress[id] = max(self.prepareProgress[id] ?? 0, frac)
+                }
                 downloadedModelIDs.insert(id)
                 persistDownloaded()
                 loadedModelID = id

@@ -98,9 +98,10 @@ struct ChatView: View {
         case .ready:
             VStack(spacing: 0) {
                 messageList
-                // Image-first: no composer until the first verdict is in; then
-                // it appears for follow-up questions.
-                if !store.messages.isEmpty { composer }
+                // Chat-first: the composer is live from the moment the brain
+                // is ready — photo, dictation, or plain text, no photo
+                // required to start talking.
+                composer
             }
         case .idle, .downloading:
             preparingScreen
@@ -139,7 +140,7 @@ struct ChatView: View {
             Text("A private first look")
                 .font(.title2.bold())
             Text(
-                "Noticed something on your skin — a rash, a mole, a bite, a burn? Snap a photo. It never leaves this phone and never touches your photo library. You'll get a careful first look and what a doctor would want to know. Not a diagnosis."
+                "Noticed something on your skin — a rash, a mole, a bite, a burn? Snap a photo for a careful first look. Or just ask a health question — everything is answered on this phone, offline, backed by an on-board medical library. Not a diagnosis."
             )
             .font(.footnote)
             .foregroundStyle(.secondary)
@@ -178,7 +179,12 @@ struct ChatView: View {
                     .font(.title)
             }
 
-            TextField(speech.isRecording ? "Listening…" : "Ask a follow-up", text: $draft, axis: .vertical)
+            TextField(
+                speech.isRecording
+                    ? "Listening…"
+                    : (store.messages.isEmpty ? "Ask anything, or add a photo" : "Ask a follow-up"),
+                text: $draft, axis: .vertical
+            )
                 .lineLimit(1...5)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
