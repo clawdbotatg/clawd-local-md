@@ -93,7 +93,7 @@ extension TriageTable {
          "category":"rash","level":"urgent","source":"Mayo Clinic",
          "note":"Pinpoint red or purple dots that do NOT fade when pressed can signal a blood or serious infection problem. With fever, unusual bruising, or feeling ill, this is an emergency. Even without other symptoms, unexplained non-blanching spots deserve same-day medical care."},
 
-        {"names":["bullseye rash","bull's-eye rash","target rash","erythema migrans","expanding ring around a tick bite"],
+        {"names":["bullseye rash","bull's-eye rash","target rash","target-like rash","target looking rash","target shaped rash","erythema migrans","expanding ring around a tick bite","rash after a tick bite"],
          "category":"rash","level":"urgent","source":"CDC",
          "note":"An expanding ring or bullseye around a tick bite fits erythema migrans, the classic early sign of Lyme disease. Early antibiotics are highly effective, so see a clinician promptly — today or tomorrow — and mention the tick exposure, even if you never saw the tick and even if you feel fine."},
 
@@ -197,6 +197,10 @@ extension TriageTable {
          "category":"bite","level":"watch","source":"Mayo Clinic",
          "note":"Scrape the stinger out sideways if it's still there, wash, and use a cold pack; local swelling and itching for a day or two is normal. Call 911 for any trouble breathing, swelling of the face, lips, or tongue, hives away from the sting site, or dizziness — that's an emergency allergic reaction. Many stings at once, or a sting inside the mouth, also deserve prompt care."},
 
+        {"names":["insect bite","bug bite"],
+         "category":"bite","level":"routine","source":"CDC",
+         "note":"Small itchy bumps after being outdoors fit ordinary insect bites; washing, a cold pack, and anti-itch cream are enough. See a clinician if a bite keeps growing or hardening, blisters, looks infected from scratching, or comes with fever or spreading rash — and get emergency help for any trouble breathing or face or throat swelling."},
+
         {"names":["mosquito bite"],
          "category":"bite","level":"routine","source":"CDC",
          "note":"Itchy bumps after being outdoors fit mosquito bites; a cold pack and anti-itch cream are enough. See a clinician if a bite area keeps growing and hardening, or if you develop fever, aches, or a rash after travel to areas with mosquito-borne illness."},
@@ -233,7 +237,7 @@ extension TriageTable {
          "category":"burn","level":"routine","source":"Mayo Clinic",
          "note":"A small burn that's red and painful but not blistered: cool it under cool (not icy) running water for 10 to 20 minutes, then cover loosely. No ice, no butter, no toothpaste. See a clinician if it's larger than your palm, on the face, hands, feet, genitals, or over a joint, or if it blisters after all."},
 
-        {"names":["blistering burn","second-degree burn","second degree burn","burn with blisters"],
+        {"names":["blistering burn","second-degree burn","second degree burn","burn with blisters","blistering sunburn","sunburn with blisters","sun blisters","severe sunburn","bad sunburn"],
          "category":"burn","level":"soon","source":"Mayo Clinic",
          "note":"A burn that blisters is at least partial-thickness. Cool it with running water, don't pop the blisters, and cover loosely. Get medical care promptly if it's bigger than a few inches, on the face, hands, feet, genitals, or a joint, or shows signs of infection — and treat any burn on a baby or an elderly person as worth being seen."},
 
@@ -253,7 +257,7 @@ extension TriageTable {
          "category":"wound","level":"routine","source":"Mayo Clinic",
          "note":"Press to stop bleeding, rinse under running water, dab on antibiotic ointment, and cover. See a clinician if the edges gape open, bleeding won't stop after 10 minutes of steady pressure, there's dirt you can't rinse out, the area is numb, or your tetanus shot is more than 5 years old for a dirty wound."},
 
-        {"names":["deep cut","gaping wound","laceration","gaping cut"],
+        {"names":["deep cut","gaping wound","laceration","gaping cut","gaping","sliced open","split open"],
          "category":"wound","level":"urgent","source":"Mayo Clinic",
          "note":"A cut whose edges gape open, shows fat or muscle, or won't stop bleeding needs closing — and stitches or glue work best within hours, so go now, not tomorrow. Keep firm pressure on it on the way. Cuts over joints, on the face, or from something dirty or rusty especially need professional care."},
 
@@ -357,7 +361,7 @@ extension TriageTable {
          "category":"swelling","level":"soon","source":"Mayo Clinic",
          "note":"A joint that's swollen without an injury to explain it deserves a clinician visit in the next day or two — gout, infection, and inflammatory arthritis all present this way, and all are treatable. A joint that is hot, red, and exquisitely painful, especially with fever, needs SAME-DAY care: an infected joint can be permanently damaged in days."},
 
-        {"names":["angioedema","swollen lips","swollen face","swollen tongue"],
+        {"names":["angioedema","swollen lips","swollen face","swollen tongue","lips are swelling","face is swelling","tongue is swelling","lips swelling up"],
          "category":"swelling","level":"urgent","source":"Mayo Clinic",
          "note":"Sudden deep swelling of the lips, face, or tongue is angioedema, and the danger is the airway. Any trouble breathing, swallowing, or a voice change: call 911 now. Even without those, new facial or tongue swelling deserves same-day medical care — and if you take an ACE-inhibitor blood-pressure medicine, say so; it's a classic cause."},
 
@@ -399,7 +403,79 @@ extension TriageTable {
 
         {"names":["stretch marks","striae"],
          "category":"other","level":"routine","source":"AAD",
-         "note":"Pink, red, or purple lines that fade toward silver fit stretch marks, from skin stretching faster than it can adapt — growth, pregnancy, weight change, or lifting. They're harmless and fade with time. Mention them to a clinician only if they appeared alongside easy bruising or long-term steroid use."}
+         "note":"Pink, red, or purple lines that fade toward silver fit stretch marks, from skin stretching faster than it can adapt — growth, pregnancy, weight change, or lifting. They're harmless and fade with time. Mention them to a clinician only if they appeared alongside easy bruising or long-term steroid use."},
+
+        {"names":["hypothermia","uncontrollable shivering","stopped shivering","too cold to think"],
+         "category":"other","level":"urgent","source":"CDC",
+         "note":"Intense shivering with clumsiness, slurred speech, or confusion after cold exposure fits hypothermia — and shivering that STOPS while someone is still cold is worse, not better. Get them dry, insulated, and warming now (blankets, skin-to-skin, warm sweet drinks if fully alert) and call 911 for confusion, drowsiness, or any doubt. Handle them gently and never give alcohol."},
+
+        {"names":["heat exhaustion","heat cramps","overheating","overheated on a hike"],
+         "category":"other","level":"soon","source":"CDC",
+         "note":"Heavy sweating with weakness, dizziness, nausea, headache, or cramps in the heat fits heat exhaustion. Stop now: shade or AC, sip water or a sports drink, loosen clothing, cool the skin with wet cloths. If there's confusion, fainting, vomiting that won't stop, or no improvement within an hour, treat it as heat stroke — call 911."},
+
+        {"names":["heat stroke","heatstroke","sunstroke","sun stroke","stopped sweating in the heat","confused from the heat"],
+         "category":"other","level":"urgent","source":"CDC",
+         "note":"Hot skin with confusion, staggering, passing out, or a stopped sweat in the heat is heat stroke — a life-threatening emergency. Call 911 now, move them somewhere cool, and cool them aggressively while you wait: cold water, ice packs to neck, armpits, and groin, fan the skin. Do not wait to see if it passes."},
+
+        {"names":["chest pain","chest pressure","chest tightness","pain spreading to my arm","pain spreading to my jaw"],
+         "category":"other","level":"urgent","source":"CDC",
+         "note":"Chest pain or pressure — especially with exertion, or spreading to the arm, jaw, neck, or back, or with sweating, nausea, or shortness of breath — must be treated as a possible heart attack. Call 911 now; do not drive yourself, and do not hike it off. If it turns out to be something minor, that's the good outcome."},
+
+        {"names":["anaphylaxis","throat closing","throat is closing","throat closing up","throat swelling","swollen throat","airway obstruction","airway swelling","airway closing","throat tightness","tongue swelling","trouble breathing after a sting","hives with trouble breathing"],
+         "category":"other","level":"urgent","source":"CDC",
+         "note":"Trouble breathing, throat or tongue swelling, widespread hives, vomiting, or dizziness after a sting, bite, food, or medicine is anaphylaxis. Use an epinephrine auto-injector immediately if there is one, and call 911 either way — a reaction can rebound after it seems to improve, so this always needs emergency care even if the epi works."},
+
+        {"names":["concussion","hit my head","head injury","knocked out","blacked out"],
+         "category":"other","level":"soon","source":"CDC",
+         "note":"A blow to the head with headache, dizziness, fogginess, or nausea fits a concussion: stop the activity now — a second hit before recovery is dangerous — rest, and get checked by a clinician within a day. Call 911 for loss of consciousness, repeated vomiting, worsening headache, confusion, slurred speech, unequal pupils, a fall from height, or anyone on blood thinners."},
+
+        {"names":["broken bone","fracture","cant put weight on it","can't put weight on it","cant put any weight on it","can't put any weight on it","bone sticking out","broken ankle","broken leg","broken arm","broken wrist","broken finger","looks crooked"],
+         "category":"other","level":"urgent","source":"Mayo Clinic",
+         "note":"A limb that looks bent or deformed, bone through the skin, a snap you heard or felt, or being unable to put any weight on it needs medical care now — today, not tomorrow. Splint it as it lies, don't straighten it, and keep weight off. Numbness, blue or cold skin beyond the injury, or bone through skin means emergency care immediately."},
+
+        {"names":["sprained ankle","twisted my ankle","rolled my ankle","sprained wrist","sprain"],
+         "category":"other","level":"watch","source":"Mayo Clinic",
+         "note":"A twisted joint that swells but can still bear some weight fits a sprain: rest, ice 15–20 minutes at a time, compression, and elevation for the first day or two. See a clinician if you can't bear weight at all, the joint looks deformed, there's numbness, pain sits on the bone itself rather than the soft tissue, or it isn't clearly improving within a few days."},
+
+        {"names":["dislocated shoulder","dislocated","popped out of the socket","kneecap popped out"],
+         "category":"swelling","level":"urgent","source":"Mayo Clinic",
+         "note":"A joint that's visibly out of place, won't move, and hurts badly fits a dislocation. Don't try to pop it back in — that can tear vessels and nerves. Splint or sling it where it is, ice it, and get emergency care now; numbness or a cold, pale hand or foot beyond the joint makes it even more time-critical."},
+
+        {"names":["altitude sickness","mountain sickness","altitude headache"],
+         "category":"other","level":"soon","source":"CDC",
+         "note":"Headache with nausea, fatigue, or poor sleep in the first day or two above ~8,000 feet fits altitude sickness. Stop ascending, rest, hydrate, and let it settle before going higher — descending is the reliable cure. Breathlessness at rest, a wet cough, confusion, clumsiness, or stumbling means severe illness: descend NOW with help and get emergency care."},
+
+        {"names":["ate a wild mushroom","wild mushroom","mushroom poisoning","ate a poisonous plant","ate wild berries","poisonous berries"],
+         "category":"other","level":"urgent","source":"Poison Control",
+         "note":"If anyone ate a wild mushroom, berry, or plant that isn't positively identified, call Poison Control now at 1-800-222-1222 — don't wait for symptoms, because the most dangerous mushrooms feel fine for hours first. Save a sample or photo of what was eaten. Vomiting, confusion, or trouble breathing means 911."},
+
+        {"names":["giardia","giardiasis","waterborne illness","waterborne infection","drank stream water","drank river water","drank lake water","drank from a stream","drank untreated water","diarrhea after camping","beaver fever"],
+         "category":"other","level":"soon","source":"CDC",
+         "note":"Cramping, gas, and watery diarrhea starting one to three weeks after drinking untreated stream, river, or lake water fits giardia. It usually needs a stool test and prescription treatment, so see a clinician in the next day or two and mention the water. Hydrate steadily; blood in stool, high fever, or signs of dehydration mean prompt care."},
+
+        {"names":["scorpion sting","stung by a scorpion"],
+         "category":"bite","level":"soon","source":"Mayo Clinic",
+         "note":"Most scorpion stings cause intense local pain, tingling, and swelling that settle with a cold pack and pain relief — but children and older adults can react severely. Get medical care today for a child who was stung, and emergency care now for muscle twitching, drooling, sweating, trouble swallowing or breathing, or spreading numbness."},
+
+        {"names":["struck by lightning","lightning strike","lightning hit","hit by lightning"],
+         "category":"other","level":"urgent","source":"CDC",
+         "note":"Anyone struck by lightning — or knocked down by a nearby strike — needs 911 now, even if they seem fine: heart rhythm problems and internal injuries can show up late. Lightning victims carry no charge and are safe to touch; start CPR if they're not breathing normally. Get everyone off the exposed terrain, as lightning does strike twice."},
+
+        {"names":["stinging nettle","nettle rash","nettle sting","brushed against nettles"],
+         "category":"rash","level":"routine","source":"Mayo Clinic",
+         "note":"An immediate burning, tingling rash with small bumps after brushing a plant fits stinging nettle. Rinse without rubbing, let it dry, then lift remaining fibers off with tape; a cold pack and antihistamine settle the sting, usually within a day. See a clinician only if the rash spreads well beyond the contact area, blisters, or you feel unwell."},
+
+        {"names":["snow blindness","photokeratitis","snow glare","eyes burning after snow","welder's flash"],
+         "category":"eye","level":"soon","source":"AAO",
+         "note":"Painful, gritty, watering, light-sensitive eyes hours after bright snow, water, or sun exposure fit photokeratitis — a sunburned cornea. Get out of the light, remove contacts, use cold compresses and artificial tears, and don't rub. It usually heals in a day or two, but see an eye clinician promptly to confirm, or immediately if vision worsens rather than improves."},
+
+        {"names":["seizure","had a seizure","convulsion","convulsions"],
+         "category":"other","level":"urgent","source":"CDC",
+         "note":"For a seizure: keep the person safe on their side, cushion the head, put NOTHING in their mouth, and time it. Call 911 for a first-ever seizure, one lasting over 5 minutes, repeated seizures, trouble breathing after, injury, pregnancy, or if it happened in water. Someone with known epilepsy whose typical seizure ends and who recovers fully may follow their own care plan — when in doubt, call."},
+
+        {"names":["thunderclap headache","worst headache of my life","worst headache ever"],
+         "category":"other","level":"urgent","source":"Mayo Clinic",
+         "note":"A severe headache that hits its worst within seconds to a minute — especially the worst of your life, or with a stiff neck, vomiting, confusion, weakness, or vision change — needs emergency care NOW. Sudden severe headaches can signal bleeding around the brain, and that diagnosis can't wait. Call 911 rather than driving."}
         ]
         """
 }

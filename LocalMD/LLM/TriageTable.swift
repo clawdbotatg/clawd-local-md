@@ -217,6 +217,7 @@ enum TriageTable {
         let categoryWords = [
             ("burn", "burn"), ("scald", "burn"), ("bite", "bite"), ("sting", "bite"),
             ("wound", "wound"), ("laceration", "wound"), ("puncture", "wound"),
+            ("eye", "eye"),
         ]
         guard let (_, category) = categoryWords.first(where: { lower.contains($0.0) })
         else { return nil }
@@ -224,6 +225,26 @@ enum TriageTable {
             .soon,
             "I can't match this exactly in my curated list — and with a \(category) finding, that's a reason to be seen, not reassured. Have a clinician look at it in the next day or two, sooner if it's getting worse."
         )
+    }
+
+    /// The more severe of the two text-triage stages. A literal match below
+    /// URGENT must not mask a worse normalized one ("tick" matching SOON hid
+    /// the bullseye-rash URGENT the naming pass would have found) — severity
+    /// ties keep the first (literal) result.
+    static func worse(_ a: VerdictResult?, _ b: VerdictResult?) -> VerdictResult? {
+        guard let a else { return b }
+        guard let b else { return a }
+        return rank(b.verdict) > rank(a.verdict) ? b : a
+    }
+
+    private static func rank(_ verdict: ChatMessage.Verdict?) -> Int {
+        switch verdict {
+        case .urgent: 3
+        case .soon: 2
+        case .watch: 1
+        case .routine: 0
+        case nil: -1
+        }
     }
 
     private static func compose(_ verdict: ChatMessage.Verdict, _ note: String) -> VerdictResult {

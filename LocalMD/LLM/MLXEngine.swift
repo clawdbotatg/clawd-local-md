@@ -75,7 +75,8 @@ final class MLXEngine: LLMEngine {
         injury, a bite, a burn, a symptom, something on their body — answer \
         with its short common medical name only. Two to four words, no \
         sentence. Like: snake bite. Or: chemical burn. Or: puncture wound. \
-        Or: testicle pain.
+        Or: testicle pain. A ring or target shaped rash where a tick was \
+        removed or attached is: bullseye rash
 
         If it is a general knowledge question, a follow-up about earlier \
         advice, or not about a health event, answer exactly: none
@@ -378,7 +379,11 @@ final class MLXEngine: LLMEngine {
                     //    the table's vocabulary.
                     // Only urgent/soon banners, deduped across the chat.
                     var curated = TriageTable.textVerdict(prompt)
-                    if curated == nil {
+                    if curated?.verdict != .urgent {
+                        // Run the naming stage unless the literal stage
+                        // already maxed out, and keep the WORSE of the two —
+                        // a sub-urgent literal match must not mask a worse
+                        // normalized one.
                         let named = (try? await self.ask(
                             instructions: Self.textNameInstructions, prompt: prompt,
                             maxTokens: 16, container: container)) ?? ""
@@ -386,7 +391,8 @@ final class MLXEngine: LLMEngine {
                         if named.range(of: "none", options: .caseInsensitive) == nil,
                             let name = TriageTable.sanitizeName(named)
                         {
-                            curated = TriageTable.findingVerdict(named: name)
+                            curated = TriageTable.worse(
+                                curated, TriageTable.findingVerdict(named: name))
                         }
                     }
                     if let curated,

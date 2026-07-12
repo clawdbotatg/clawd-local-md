@@ -109,9 +109,19 @@ when to be seen.
   text-naming pass (`textNameInstructions` — the text twin of the photo
   naming pass) normalizes any phrasing to the table's vocabulary ("a
   rattler tagged me" → "snake bite"), and `TriageTable.findingVerdict`
-  judges the name. Either way an URGENT/SOON hit banners the curated
-  verdict + note BEFORE the conversational turn (deduped per chat; minor
-  and unmatched messages stay conversational). Born from "i just got bit
+  judges the name — with the photo pipeline's soon-on-miss posture for
+  unplaceable burn/bite/wound/sting/eye names. Stage 2 runs unless stage 1
+  already hit URGENT, and the WORSE of the two wins (`TriageTable.worse`) —
+  a sub-urgent literal match ("tick" → SOON) must not mask a worse
+  normalized one ("bullseye rash" → URGENT). Either way an URGENT/SOON hit
+  banners the curated verdict + note BEFORE the conversational turn
+  (deduped per chat; minor and unmatched messages stay conversational).
+  The wilderness tier (heat stroke, hypothermia, chest pain, anaphylaxis,
+  concussion, fractures, dislocations, altitude, seizures, mushroom
+  ingestion, giardia, lightning, …) was added 2026-07-11 after the hiking
+  suite exposed that the visible-findings corpus missed the things that
+  actually kill hikers — `tools/brain_suite_hiking.json` (50 live-model
+  cases, incl. must-NOT-banner traps) is the regression battery. Born from "i just got bit
   by a snake" getting animal-bite *prevention tips* (2026-07-11). Named
   venomous spiders have their own SOON entry. When the model goes silent
   after a lookup, `libraryFallback` picks the topic paragraphs *relevant

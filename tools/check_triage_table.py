@@ -237,12 +237,17 @@ TEXT_CASES = [
     ("my balls hurt", None, "no curated match -> model + library path"),
     ("i have shingles near my eye", "URGENT", "urgent entries fire from text too"),
     ("my dog bit a hole in my shoe", None, "'dog bit me' must not fire on the shoe"),
+    ("sliced my hand open on my camp knife and it's gaping", "URGENT", "gaping = deep cut"),
+    ("rolled my ankle and now i can't put any weight on it", "URGENT", "no-weight-bearing = possible fracture"),
+    ("got snow glare all day and now my eyes are burning", "SOON", "photokeratitis"),
+    ("my buddy stopped sweating and he's acting confused and it's really hot out", None, "literal misses; the naming stage carries this one"),
 ]
 
 
 CATEGORY_WORDS = [
     ("burn", "burn"), ("scald", "burn"), ("bite", "bite"), ("sting", "bite"),
     ("wound", "wound"), ("laceration", "wound"), ("puncture", "wound"),
+    ("eye", "eye"),
 ]
 
 
@@ -285,6 +290,13 @@ FINDING_CASES = [
     ("nail injury", None, "not a wound word — conversational path handles it"),
     ("ringworm", None, "routine findings never banner a text chat"),
     ("sunburn", None, "sunburn is routine — the burn fallback must not out-rank a real match"),
+    ("sunburn with blisters", "SOON", "second-degree sunburn out-ranks bare sunburn by specificity"),
+    ("severe sunburn", "SOON", "the naming pass says this too — must out-rank bare sunburn"),
+    ("sunstroke", "URGENT", "normalizer synonym for heat stroke"),
+    ("insect bite", None, "generic insect bite is routine — the bite fallback must not fire"),
+    ("airway obstruction", "URGENT", "normalizer phrasing for anaphylaxis"),
+    ("waterborne illness", "SOON", "normalizer phrasing for giardia"),
+    ("target-like rash", "URGENT", "normalizer phrasing for bullseye rash"),
     ("testicle pain", None, "not in the table -> model + library path"),
     ("none", None, "the normalizer's no-event answer matches nothing"),
 ]

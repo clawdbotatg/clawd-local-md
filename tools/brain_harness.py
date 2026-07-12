@@ -314,8 +314,10 @@ def run_turn(brain, entries, prompt, history, trace=print):
     if level:
         entry = max(triage.all_matches(entries, prompt), key=lambda m: triage.SEVERITY[m["level"]])
         note = entry["note"]
-    else:
-        # Stage 2: the model names, the table judges.
+    if level != "URGENT":
+        # Stage 2 unless stage 1 already maxed out: the model names, the
+        # table judges — and the WORSE of the two wins, so a sub-urgent
+        # literal match can't mask a worse normalized one.
         named = brain.generate(
             [{"role": "system", "content": TEXTNAME_PROMPT},
              {"role": "user", "content": prompt}],
@@ -326,7 +328,8 @@ def run_turn(brain, entries, prompt, history, trace=print):
             name = triage.sanitize_name(named)
             if name:
                 result = triage.finding_verdict_entry(entries, name)
-                if result:
+                if result and (level is None
+                               or triage.SEVERITY[result[0].lower()] > triage.SEVERITY[level.lower()]):
                     level, note = result
     if level and not any(note in m.get("content", "") for m in history):
         banner = level
