@@ -148,27 +148,55 @@ struct ChatView: View {
         VStack(spacing: 14) {
             Text("🩺")
                 .font(.system(size: 44))
-            Text("A private first look")
+            Text("Ask about anything")
                 .font(.title2.bold())
             Text(
-                "Noticed something on your skin — a rash, a mole, a bite, a burn? Snap a photo for a careful first look. Or just ask a health question — everything is answered on this phone, offline, backed by an on-board medical library. Not a diagnosis."
+                "Describe a symptom, a pain, a worry, or a question — type or tap the mic below. It's answered right here on your phone, offline, from an on-board medical library, with clear guidance on how seriously to take it. Not a diagnosis."
             )
             .font(.footnote)
             .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
-            Button {
-                showCamera = true
-            } label: {
-                Label("Take a Photo", systemImage: "camera.fill")
-                    .font(.headline)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+
+            // A few real starting points, so the composer isn't a blank stare.
+            VStack(spacing: 8) {
+                ForEach(["My throat is really sore and I have a fever", "Is this headache something to worry about?", "I twisted my ankle on a hike"], id: \.self) { example in
+                    Button {
+                        store.send(example)
+                    } label: {
+                        Text(example)
+                            .font(.subheadline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .buttonStyle(.borderedProminent)
-            Button("Photo Library") { showPhotoPicker = true }
-                .font(.subheadline)
+            .padding(.top, 4)
+
+            // Photo is offered, but honestly framed as context — the on-device
+            // model reads appearance, not diagnosis (see docs/PHOTO-PATH.md).
+            Text("Got a skin concern? Add a photo for a first look — it can flag when to get care, but a photo can't rule anything out.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.top, 8)
+            HStack(spacing: 18) {
+                Button {
+                    showCamera = true
+                } label: {
+                    Label("Take a Photo", systemImage: "camera")
+                }
+                Button {
+                    showPhotoPicker = true
+                } label: {
+                    Label("Photo Library", systemImage: "photo.on.rectangle")
+                }
+            }
+            .font(.subheadline)
         }
-        .padding(.top, 40)
+        .padding(.top, 32)
         .padding(.horizontal, 24)
     }
 

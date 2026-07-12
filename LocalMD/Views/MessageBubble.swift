@@ -81,6 +81,10 @@ struct MessageBubble: View {
     private var identificationBlock: some View {
         VStack(alignment: .leading, spacing: 2) {
             if let identification = message.identification {
+                Text("First look")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
                 Text(identification)
                     .font(.headline)
                     .textSelection(.enabled)
