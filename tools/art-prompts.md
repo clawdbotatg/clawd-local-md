@@ -11,27 +11,32 @@ To regenerate, POST `{"model": "gpt-image-2", "prompt": ..., "size":
 
 ## AppIcon (1024×1024)
 
-> iOS app icon, modern polished flat illustration with soft gradients and
-> depth: a cute friendly holographic robot doctor — translucent glowing
-> cyan, faint scanlines, wearing a doctor head mirror and stethoscope with
-> a small red cross badge — projected as a hologram beaming up out of a
-> smartphone that lies on a grassy sunlit hill, blue sky. Clean bold
-> centered composition, square, no text, no border.
+> Photorealistic cinematic render, iOS app icon composition: a modern
+> smartphone lying in real dewy grass on a sunlit hillside, projecting a
+> volumetric hologram upward — a friendly medical robot doctor made of
+> translucent glowing cyan light with subtle scan lines and light falloff,
+> wearing a physician head mirror and a stethoscope, small red cross
+> emblem on its chest. Shallow depth of field, golden-hour sunlight,
+> realistic materials and reflections on the phone glass, soft volumetric
+> light rays. Centered square composition, no text, no border, no rounded
+> corners.
 
-Post-process: the model bakes rounded corners; center-crop to 960×960 and
-resize back to 1024 (`sips -c 960 960` then `-z 1024 1024`) so nothing
-white can peek through iOS's own icon mask.
+Post-process: if the model bakes rounded corners, center-crop to 960×960
+and resize back to 1024 (`sips -c 960 960` then `-z 1024 1024`) so
+nothing can peek through iOS's own icon mask. The photoreal prompt above
+came back full-bleed and needed none.
 
 ## ExplorerScene / loading art (1024×1024)
 
-> Modern polished flat illustration with soft gradients, warm light and
-> gentle depth: a hiker with a small backpack stands on a mountain trail
-> among pine trees and rolling green hills, holding up a smartphone; a
-> friendly holographic robot doctor — translucent glowing cyan with faint
-> scanlines, doctor head mirror, stethoscope, small red cross badge — is
-> projected out of the phone into the air, waving warmly at the hiker.
-> Sunny sky, a few soft clouds. Storybook app-illustration quality, square
-> composition, no text.
+> Photorealistic cinematic photograph-style render: a hiker with a
+> backpack stands on a mountain trail at golden hour, pine forest and
+> misty peaks behind, holding a smartphone up in one hand; from the phone
+> screen a volumetric hologram is projected into the air — a friendly
+> medical robot doctor of translucent glowing cyan light with subtle scan
+> lines, physician head mirror, stethoscope, small red cross emblem,
+> waving warmly. Realistic skin, fabric and light; the hologram casts a
+> soft cyan glow on the hiker face and hand. Shallow depth of field,
+> cinematic color grade. Square composition, no text.
 
 ## DemoPhoto (800×800)
 
