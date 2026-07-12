@@ -191,11 +191,40 @@ enum TriageTable {
     /// unmatched messages stay conversational. Multiple matches escalate to
     /// the worst, same as look-alikes.
     static func textVerdict(_ text: String) -> VerdictResult? {
-        let matches = allMatches(in: text)
-        guard let worst = matches.max(by: { severity($0.level) < severity($1.level) }),
-            severity(worst.level) >= severity("soon")
+        guard let worst = textMatch(text), severity(worst.level) >= severity("soon")
         else { return nil }
         return compose(uiVerdict(worst.level), worst.note)
+    }
+
+    /// The worst entry matching the user's typed words, at ANY level — or nil
+    /// if the words match nothing in the table.
+    ///
+    /// The engine uses `nil` as the sole trigger for the model naming pass:
+    /// a match here (even a benign, non-bannering one) means the table has
+    /// spoken and the model must not overrule it. Handed a closed menu of
+    /// banner-worthy conditions, a 4B force-picks the scariest near-neighbor
+    /// rather than saying none — a nosebleed became "severe bleeding", a
+    /// concussion "thunderclap headache" (harness, 2026-07-11). The table is
+    /// the authority; the model only fills genuine gaps.
+    static func textMatch(_ text: String) -> TriageEntry? {
+        allMatches(in: text).max(by: { severity($0.level) < severity($1.level) })
+    }
+
+    /// The closed vocabulary the text-naming pass chooses from: the primary
+    /// name of every entry that can banner (urgent/soon).
+    ///
+    /// Open-vocabulary naming could not be made to work. The model invented a
+    /// new clinically-correct synonym every single run — "melena", then "upper
+    /// GI bleed"; "ingestion poison", then "chemical ingestion"; "water
+    /// inhalation", then "pool water aspiration" — and the alias list could
+    /// never catch up (device + harness, 2026-07-11). So the model is handed
+    /// the table's OWN words and must pick one or say none, exactly like the
+    /// photo pipeline's closed category list. New entries join the menu
+    /// automatically, so this can't drift.
+    static var bannerVocabulary: [String] {
+        entries
+            .filter { severity($0.level) >= severity("soon") }
+            .map { $0.names[0] }
     }
 
     /// Verdict for a NORMALIZED finding name — the text pipeline's general
@@ -214,10 +243,12 @@ enum TriageTable {
         // name itself says it's a burn/bite/wound — and an unplaceable one
         // of those is a reason to be seen, not to chat.
         let lower = name.lowercased()
+        // Deliberately NOT "eye": eyes now have specific entries (pink eye,
+        // stye, chemical splash, snow blindness), and a soon-on-miss eye
+        // fallback over-called benign goopy eyes (device, 2026-07-11).
         let categoryWords = [
             ("burn", "burn"), ("scald", "burn"), ("bite", "bite"), ("sting", "bite"),
             ("wound", "wound"), ("laceration", "wound"), ("puncture", "wound"),
-            ("eye", "eye"),
         ]
         guard let (_, category) = categoryWords.first(where: { lower.contains($0.0) })
         else { return nil }
@@ -225,26 +256,6 @@ enum TriageTable {
             .soon,
             "I can't match this exactly in my curated list — and with a \(category) finding, that's a reason to be seen, not reassured. Have a clinician look at it in the next day or two, sooner if it's getting worse."
         )
-    }
-
-    /// The more severe of the two text-triage stages. A literal match below
-    /// URGENT must not mask a worse normalized one ("tick" matching SOON hid
-    /// the bullseye-rash URGENT the naming pass would have found) — severity
-    /// ties keep the first (literal) result.
-    static func worse(_ a: VerdictResult?, _ b: VerdictResult?) -> VerdictResult? {
-        guard let a else { return b }
-        guard let b else { return a }
-        return rank(b.verdict) > rank(a.verdict) ? b : a
-    }
-
-    private static func rank(_ verdict: ChatMessage.Verdict?) -> Int {
-        switch verdict {
-        case .urgent: 3
-        case .soon: 2
-        case .watch: 1
-        case .routine: 0
-        case nil: -1
-        }
     }
 
     private static func compose(_ verdict: ChatMessage.Verdict, _ note: String) -> VerdictResult {

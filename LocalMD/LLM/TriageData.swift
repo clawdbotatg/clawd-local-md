@@ -37,7 +37,7 @@ extension TriageTable {
          "category":"rash","level":"routine","source":"AAD",
          "note":"Dry, itchy, inflamed patches are commonly eczema. Fragrance-free moisturizer several times a day plus 1% hydrocortisone for flares is the standard first step. See a clinician if it oozes, crusts, or is painful (possible infection), covers a large area, or disrupts sleep."},
 
-        {"names":["contact dermatitis","allergic skin reaction"],
+        {"names":["contact dermatitis","allergic skin reaction","itchy rash after plants","itchy rash from plants","rash from a plant","rash after bushwhacking","brushed against a plant"],
          "category":"rash","level":"routine","source":"AAD",
          "note":"An itchy rash where something touched the skin — soaps, metals, plants, cosmetics — is usually contact dermatitis. Wash the area, avoid the trigger, and use hydrocortisone for the itch. See a clinician if it involves the face or genitals, blisters badly, or keeps spreading."},
 
@@ -233,7 +233,7 @@ extension TriageTable {
          "category":"bite","level":"routine","source":"Mayo Clinic",
          "note":"Intensely itchy red bumps around the ankles, waistband, or skin folds after time in grass or brush fit chigger bites. The mites are already gone — a good shower and anti-itch cream are the treatment. See a clinician only if bites look infected from scratching or the itching is unbearable."},
 
-        {"names":["minor burn","first-degree burn","first degree burn","small red burn"],
+        {"names":["minor burn","first-degree burn","first degree burn","small red burn","small burn","kitchen burn","burned my finger","burnt my finger","burned my hand"],
          "category":"burn","level":"routine","source":"Mayo Clinic",
          "note":"A small burn that's red and painful but not blistered: cool it under cool (not icy) running water for 10 to 20 minutes, then cover loosely. No ice, no butter, no toothpaste. See a clinician if it's larger than your palm, on the face, hands, feet, genitals, or over a joint, or if it blisters after all."},
 
@@ -241,7 +241,7 @@ extension TriageTable {
          "category":"burn","level":"soon","source":"Mayo Clinic",
          "note":"A burn that blisters is at least partial-thickness. Cool it with running water, don't pop the blisters, and cover loosely. Get medical care promptly if it's bigger than a few inches, on the face, hands, feet, genitals, or a joint, or shows signs of infection — and treat any burn on a baby or an elderly person as worth being seen."},
 
-        {"names":["sunburn"],
+        {"names":["sunburn","sunburned","got sunburned","sunburn on my","sunburnt"],
          "category":"burn","level":"routine","source":"AAD",
          "note":"Cool showers, plain moisturizer or aloe, extra water, and ibuprofen cover most sunburns; leave blisters intact. See a clinician for widespread blistering, fever, chills, headache, or confusion — and remember each blistering sunburn raises lifetime skin-cancer risk, so this one earns better sunscreen next time."},
 
@@ -253,7 +253,7 @@ extension TriageTable {
          "category":"burn","level":"urgent","source":"Mayo Clinic",
          "note":"An electrical burn can be small on the surface and serious underneath — current damages tissue along its path, including the heart. Get emergency care for any electrical burn beyond a trivial static-type contact, even if the visible mark looks minor."},
 
-        {"names":["minor cut","small cut","scrape","abrasion","paper cut"],
+        {"names":["minor cut","small cut","scrape","scraped","scraped my knee","scraped my elbow","grazed","road rash","abrasion","paper cut"],
          "category":"wound","level":"routine","source":"Mayo Clinic",
          "note":"Press to stop bleeding, rinse under running water, dab on antibiotic ointment, and cover. See a clinician if the edges gape open, bleeding won't stop after 10 minutes of steady pressure, there's dirt you can't rinse out, the area is numb, or your tetanus shot is more than 5 years old for a dirty wound."},
 
@@ -433,7 +433,11 @@ extension TriageTable {
          "category":"other","level":"urgent","source":"Mayo Clinic",
          "note":"A limb that looks bent or deformed, bone through the skin, a snap you heard or felt, or being unable to put any weight on it needs medical care now — today, not tomorrow. Splint it as it lies, don't straighten it, and keep weight off. Numbness, blue or cold skin beyond the injury, or bone through skin means emergency care immediately."},
 
-        {"names":["sprained ankle","twisted my ankle","rolled my ankle","sprained wrist","sprain"],
+        {"names":["pulled muscle","pulled a muscle","muscle strain","strained muscle","tweaked my back","pulled something"],
+         "category":"other","level":"routine","source":"Mayo Clinic",
+         "note":"A muscle that aches, tightens, or hurts to stretch after exertion fits a strain — rest it, ice for the first day or two, gentle movement as it eases, and over-the-counter pain relief if needed. See a clinician if you heard a pop and can't use the muscle at all, the area swells or bruises badly, it's numb or weak, or it isn't improving after a week or two."},
+
+        {"names":["sprained ankle","twisted my ankle","rolled my ankle","sprained wrist","sprained finger","sprained knee","sprain","sprained"],
          "category":"other","level":"watch","source":"Mayo Clinic",
          "note":"A twisted joint that swells but can still bear some weight fits a sprain: rest, ice 15–20 minutes at a time, compression, and elevation for the first day or two. See a clinician if you can't bear weight at all, the joint looks deformed, there's numbness, pain sits on the bone itself rather than the soft tissue, or it isn't clearly improving within a few days."},
 
@@ -475,7 +479,123 @@ extension TriageTable {
 
         {"names":["thunderclap headache","worst headache of my life","worst headache ever"],
          "category":"other","level":"urgent","source":"Mayo Clinic",
-         "note":"A severe headache that hits its worst within seconds to a minute — especially the worst of your life, or with a stiff neck, vomiting, confusion, weakness, or vision change — needs emergency care NOW. Sudden severe headaches can signal bleeding around the brain, and that diagnosis can't wait. Call 911 rather than driving."}
+         "note":"A severe headache that hits its worst within seconds to a minute — especially the worst of your life, or with a stiff neck, vomiting, confusion, weakness, or vision change — needs emergency care NOW. Sudden severe headaches can signal bleeding around the brain, and that diagnosis can't wait. Call 911 rather than driving."},
+
+        {"names":["stroke","having a stroke","face drooping","face is drooping","one side of my face","slurred speech","cant speak right","can't speak right","arm went weak","one side went numb","sudden weakness on one side"],
+         "category":"other","level":"urgent","source":"CDC",
+         "note":"Sudden face drooping, arm weakness, or slurred or garbled speech is a stroke until proven otherwise — think FAST: Face, Arms, Speech, Time. Call 911 now and note the time symptoms started; clot-busting treatment only works in a short window, so every minute matters. Also call for sudden numbness on one side, confusion, trouble seeing, or loss of balance."},
+
+        {"names":["choking","cant breathe from food","food stuck in my throat","something stuck in my throat","choking on food"],
+         "category":"other","level":"urgent","source":"Red Cross",
+         "note":"If someone can't breathe, cough, or speak, they are choking — call 911 and give firm back blows and abdominal thrusts (Heimlich) until it clears or they pass out; if they collapse, start CPR. Someone who can still cough forcefully should keep coughing. A throat that feels blocked with swelling or hives after a food, sting, or medicine may be anaphylaxis — use epinephrine and call 911."},
+
+        {"names":["severe bleeding","bleeding heavily","heavy bleeding","blood spurting","spurting blood","gushing blood","bleeding a lot","deep gash"],
+         "category":"wound","level":"urgent","source":"Red Cross",
+         "note":"For bleeding that won't stop, is spurting, or soaks through cloth: press hard directly on the wound with a clean cloth and keep pressing, add more cloth on top without lifting off, and raise the area if you can. Call 911 for heavy or spurting bleeding; if it doesn't slow with firm pressure, a tourniquet above the wound on a limb can be lifesaving. Keep the person warm and still."},
+
+        {"names":["suicidal","suicidal thoughts","thinking about suicide","want to kill myself","kill myself","end my life","dont want to live","don't want to live","dont want to be here anymore","hurt myself","self harm","harming myself","better off dead","no reason to live"],
+         "category":"other","level":"urgent","source":"988 Lifeline",
+         "note":"It matters that you said this, and you don't have to handle it alone. Please reach out right now: in the US call or text 988 (Suicide and Crisis Lifeline) to talk with someone any time, day or night, or call 911 or go to an emergency room if you might act on these thoughts or you're not safe. If you can, tell someone near you and stay with them. You deserve support, and help is available."},
+
+        {"names":["overdose","took too many pills","took too much","swallowed poison","drank poison","poisoned","poisoning","ingestion poison","poison ingestion","ingested poison","ingested chemicals","swallowed a chemical","swallowed cleaning product","swallowed something toxic","alcohol poisoning","took a whole bottle"],
+         "category":"other","level":"urgent","source":"Poison Control",
+         "note":"For a known or suspected poisoning or overdose, call Poison Control now at 1-800-222-1222 (US) — they answer 24/7 and will tell you exactly what to do; call 911 instead if the person is unconscious, seizing, or not breathing normally. Don't make them vomit unless told to. Have the substance and amount ready, and if it was intentional, treat it as an emergency and stay with them."},
+
+        {"names":["coughing up blood","coughing blood","vomiting blood","throwing up blood","blood in my vomit"],
+         "category":"other","level":"urgent","source":"Mayo Clinic",
+         "note":"Coughing up blood, or vomiting blood or what looks like coffee grounds, needs emergency evaluation now — call 911 for more than a streak, or with chest pain, shortness of breath, or lightheadedness. Even a small amount deserves a same-day clinician: note how much and what color, and don't take aspirin or blood thinners until you're seen."},
+
+        {"names":["black stool","black tarry stool","melena","blood in my stool","bloody stool","rectal bleeding","tarry stools"],
+         "category":"other","level":"soon","source":"Mayo Clinic",
+         "note":"Black, tarry stools or visible blood can signal bleeding in the digestive tract — see a clinician promptly, today if there's a lot of blood, dizziness, or belly pain, or 911 for fainting or fast heartbeat. Bright red on the surface or paper is often hemorrhoids or a fissure, but new or persistent bleeding still needs to be checked to be sure."},
+
+        {"names":["asthma attack","cant catch my breath","can't catch my breath","wheezing badly","inhaler isnt working","inhaler isn't working","struggling to breathe"],
+         "category":"other","level":"urgent","source":"CDC",
+         "note":"For an asthma flare, sit upright and take your quick-relief (rescue) inhaler as prescribed. Call 911 if you're too breathless to speak in full sentences, your lips or nails look blue, the inhaler isn't helping, or you're getting worse — don't wait it out. Trouble breathing is never something to tough out, especially without a rescue inhaler on hand."},
+
+        {"names":["low blood sugar","hypoglycemia","hypoglycemic","hypoglycemic shock","blood sugar crashed","shaky and sweaty and diabetic","diabetic and shaky"],
+         "category":"other","level":"soon","source":"CDC",
+         "note":"Shakiness, sweating, confusion, or weakness in someone with diabetes suggests low blood sugar: if they're awake and can swallow, give 15 grams of fast sugar (juice, glucose tabs, regular soda), wait 15 minutes, and repeat if still low. Call 911 for confusion that doesn't clear, seizures, or unconsciousness — never force food into someone who can't swallow; use glucagon if available."},
+
+        {"names":["high blood sugar","hyperglycemia","blood sugar is really high","ketones"],
+         "category":"other","level":"soon","source":"CDC",
+         "note":"Very high blood sugar with a lot of thirst and urination usually needs a same-day plan with your clinician. But fruity-smelling breath, nausea and vomiting, belly pain, deep or fast breathing, or confusion can mean diabetic ketoacidosis — a life-threatening emergency. Check ketones if you can, and call 911 for those warning signs rather than waiting."},
+
+        {"names":["meningitis","stiff neck and fever","stiff neck and a fever","fever and stiff neck","fever and a stiff neck","stiff neck with headache","headache and a stiff neck","neck stiff and light hurts"],
+         "category":"other","level":"urgent","source":"CDC",
+         "note":"A severe headache with a stiff neck and fever — especially with confusion, sensitivity to light, or a rash of small purple-red spots that don't fade when pressed — can be meningitis, which moves fast. Call 911 or get to an ER now; this is one where hours matter and it's far better to be checked and cleared."},
+
+        {"names":["appendicitis","pain in my lower right belly","lower right abdominal pain","severe stomach pain","severe abdominal pain","really bad stomach pain"],
+         "category":"other","level":"urgent","source":"Mayo Clinic",
+         "note":"Belly pain that starts near the navel and settles in the lower right, worsening over hours with nausea, fever, or pain when you let go after pressing, can be appendicitis and needs an ER now — don't eat, drink, or take laxatives or painkillers that could mask it. Any severe, constant, or rapidly worsening abdominal pain deserves emergency evaluation."},
+
+        {"names":["testicular torsion","sudden severe testicle pain","sudden testicle pain","one testicle suddenly hurts","pain in one of my testicles","pain in one testicle","one testicle hurts","one of my testicles hurts"],
+         "category":"other","level":"urgent","source":"Mayo Clinic",
+         "note":"Sudden, severe pain in one testicle — often with swelling, nausea, or vomiting — can be testicular torsion, where the blood supply twists off. This is an emergency: get to an ER now, because the testicle can be saved only within a few hours. Don't wait to see if it eases."},
+
+        {"names":["chemical in my eye","chemical splash in eye","bleach in my eye","something splashed in my eye","acid in my eye"],
+         "category":"eye","level":"urgent","source":"AAO",
+         "note":"For a chemical splash in the eye, start rinsing immediately — flush with clean lukewarm water or saline for at least 15–20 minutes, holding the lid open, before anything else. Remove contacts while rinsing. Then call Poison Control (1-800-222-1222) or get to an ER, and bring the product label. Don't rub the eye or bandage it shut."},
+
+        {"names":["electric shock","electrocuted","got shocked badly","shocked by an outlet"],
+         "category":"other","level":"urgent","source":"Mayo Clinic",
+         "note":"After a significant electric shock, call 911 even if the person seems okay — the current can cause heart rhythm problems and deep burns that aren't visible. Don't touch someone still in contact with the source; cut the power first. Watch for burns at entry and exit points, and get checked for any loss of consciousness, chest pain, numbness, or muscle pain."},
+
+        {"names":["drowning","almost drowned","near drowning","secondary drowning","pulled from the water","inhaled water","water inhalation","aspirated water"],
+         "category":"other","level":"urgent","source":"CDC",
+         "note":"Anyone pulled from the water after struggling or going under needs 911, even if they seem fine — trouble can appear hours later as coughing, breathlessness, or exhaustion. If they're not breathing normally, start CPR. Get everyone who inhaled water evaluated, and never leave them alone to 'sleep it off.'"},
+
+        {"names":["fainted","passed out","blacked out and fell","keep fainting","lost consciousness"],
+         "category":"other","level":"soon","source":"Mayo Clinic",
+         "note":"A brief faint with a quick, full recovery is often harmless (heat, standing too long, a hard cough), but it's worth a prompt clinician visit to be sure. Call 911 if fainting comes with chest pain, palpitations, trouble breathing, a bad headache, confusion, or an injury from the fall, if it happens during exertion or lying down, or if recovery isn't quick and complete."},
+
+        {"names":["strep throat","really bad sore throat","sore throat and fever","cant swallow it hurts so bad","white spots on my tonsils"],
+         "category":"mouth","level":"soon","source":"CDC",
+         "note":"A sore throat with fever, swollen tender neck glands, or white patches on the tonsils and no cough can be strep, which is diagnosed with a quick swab and treated with antibiotics — worth a clinician visit in the next day or two. Go now, though, for trouble breathing or swallowing saliva, drooling, a muffled voice, or a neck too stiff to move."},
+
+        {"names":["urinary tract infection","uti","burning when i pee","hurts to pee","peeing constantly and it burns"],
+         "category":"other","level":"soon","source":"Mayo Clinic",
+         "note":"Burning with urination, urgency, and frequent small amounts fit a urinary tract infection, which usually needs prescription antibiotics — see a clinician in the next day or two and drink plenty of water meanwhile. Fever, chills, back or flank pain, or vomiting can mean it has reached the kidneys: get seen the same day, or 911 if you feel very unwell."},
+
+        {"names":["earache","ear infection","ear really hurts","ear pain and fever"],
+         "category":"other","level":"watch","source":"Mayo Clinic",
+         "note":"Ear pain, often with a plugged feeling or reduced hearing, is common with colds and usually eases with time and pain relievers. See a clinician if pain is severe or lasts beyond a day or two, there's fever, fluid or pus draining from the ear, swelling behind the ear, or it's a young child — and promptly for sudden hearing loss or intense dizziness."},
+
+        {"names":["flu","influenza","have the flu","body aches and fever","flu symptoms"],
+         "category":"other","level":"routine","source":"CDC",
+         "note":"Fever, body aches, headache, cough, and exhaustion coming on fast fit influenza. Rest, fluids, and acetaminophen or ibuprofen are the mainstays; antiviral medicine helps most if started within about 48 hours, so ask a clinician early if you're pregnant, over 65, or have a chronic condition. Get care now for trouble breathing, chest pain, confusion, a fever that returns after improving, or symptoms of dehydration."},
+
+        {"names":["high fever","fever wont come down","fever won't come down","104 fever"],
+         "category":"other","level":"soon","source":"Mayo Clinic",
+         "note":"Rest and fluids handle most adult fevers, with acetaminophen or ibuprofen for comfort. See a clinician promptly for a fever above 103°F (39.4°C), one lasting more than three days, or one with a stiff neck, bad headache, rash, trouble breathing, confusion, or persistent vomiting. Any fever in a baby under 3 months is an emergency — call the doctor or go in now."},
+
+        {"names":["infant fever","fever in infant","baby has a fever","newborn fever","my baby feels hot"],
+         "category":"other","level":"urgent","source":"Mayo Clinic",
+         "note":"A fever of 100.4°F (38°C) or higher in a baby under 3 months is an emergency — call the pediatrician, 911, or go to the ER now, even if the baby seems okay otherwise. For older infants and toddlers, get seen the same day for a fever with poor feeding, unusual sleepiness, a rash, trouble breathing, no wet diapers, or a fever lasting more than a couple of days."},
+
+        {"names":["nosebleed","bloody nose","nose wont stop bleeding","nose won't stop bleeding"],
+         "category":"other","level":"routine","source":"Mayo Clinic",
+         "note":"For a nosebleed, sit up, lean slightly forward, and pinch the soft part of the nose steadily for 10–15 minutes without peeking. Most stop this way. See a clinician if bleeding lasts beyond 20–30 minutes of steady pressure, keeps coming back, follows a hard blow to the head or face, or comes with a lot of blood — and seek urgent care if you feel faint or you're on blood thinners."},
+
+        {"names":["toothache","tooth really hurts","bad toothache","swollen jaw and tooth pain"],
+         "category":"mouth","level":"watch","source":"Mayo Clinic",
+         "note":"A toothache often means a cavity, exposed root, or infection, and needs a dentist rather than an app to fix the cause; meanwhile a saltwater rinse and over-the-counter pain relievers help. Get care urgently for facial or jaw swelling, fever, or pain with trouble breathing or swallowing — a spreading dental infection is dangerous, not just painful."},
+
+        {"names":["dehydration","really dehydrated","havent peed all day","haven't peed all day","dizzy and no urine","cant keep water down","can't keep water down","cant keep fluids down","can't keep fluids down","cant keep anything down","can't keep anything down","vomiting and diarrhea all day"],
+         "category":"other","level":"soon","source":"CDC",
+         "note":"Thirst, dark urine, dry mouth, dizziness, and passing little urine point to dehydration — sip water or an oral rehydration or sports drink steadily, and rest somewhere cool. Get prompt care for no urine over 8 hours, confusion, a racing heart, fainting, or an inability to keep fluids down; in a young child or older adult, or with ongoing vomiting or diarrhea, don't wait."},
+
+        {"names":["heartburn","acid reflux","burning in my chest after eating"],
+         "category":"other","level":"watch","source":"Mayo Clinic",
+         "note":"A burning behind the breastbone after meals or when lying down fits heartburn; smaller meals, staying upright afterward, and an antacid usually help. But heart problems can masquerade as heartburn — treat it as a possible heart attack and call 911 if the discomfort comes with exertion, spreads to the arm, jaw, or back, or brings sweating, nausea, or shortness of breath."},
+
+        {"names":["lightheaded","light headed","feeling faint","feeling lightheaded","woozy","a bit dizzy"],
+         "category":"other","level":"routine","source":"Mayo Clinic",
+         "note":"Feeling lightheaded or woozy is usually harmless — standing up too fast, heat, hunger, or mild dehydration. Sit or lie down, and sip water or something with sugar and salt. See a clinician promptly, though, if you actually pass out, or it comes with chest pain, palpitations, trouble breathing, slurred speech, weakness on one side, a severe headache, or it keeps happening."},
+
+        {"names":["cracked lips","lips are cracked","chapped lips","really thirsty","very thirsty","so thirsty","super thirsty","parched"],
+         "category":"other","level":"routine","source":"CDC",
+         "note":"Thirst and dry or cracked lips usually just mean you need fluids — sip water steadily, and add an electrolyte or sports drink if you've been sweating a lot. Watch for signs it's becoming real dehydration: little or no urination, dark urine, dizziness, a racing heart, or confusion — those mean stop, rehydrate in earnest, and get help if they don't ease."}
         ]
         """
 }

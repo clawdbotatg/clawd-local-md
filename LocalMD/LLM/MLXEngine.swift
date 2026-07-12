@@ -69,19 +69,34 @@ final class MLXEngine: LLMEngine {
     /// only NAMES what the user is describing — in the vocabulary the
     /// triage table speaks — and `TriageTable` judges it. It must never
     /// assess severity itself.
-    private static let textNameInstructions = """
-        The user typed a message to a health app. If it describes a health \
-        event or finding happening to them or someone with them — an \
-        injury, a bite, a burn, a symptom, something on their body — answer \
-        with its short common medical name only. Two to four words, no \
-        sentence. Like: snake bite. Or: chemical burn. Or: puncture wound. \
-        Or: testicle pain. A ring or target shaped rash where a tick was \
-        removed or attached is: bullseye rash
-
-        If it is a general knowledge question, a follow-up about earlier \
-        advice, or not about a health event, answer exactly: none
-        Never add explanation or advice.
+    private static var textNameInstructions: String {
         """
+        The user typed a message to a health app. Decide whether it describes \
+        one of the conditions in the LIST below happening to them or someone \
+        with them.
+
+        LIST:
+        \(TriageTable.bannerVocabulary.joined(separator: ", "))
+
+        MOST MESSAGES ARE NOT ON THE LIST. Answer exactly "none" unless the \
+        message clearly and specifically describes a listed condition. A \
+        near miss is a none: a nosebleed is none (NOT severe bleeding), a \
+        pulled muscle is none (NOT dislocated shoulder), a minor burn is \
+        none (NOT blistering burn), a canker sore is none (NOT oral \
+        thrush), a sprained finger is none (NOT swollen joint). A general \
+        question or a follow-up is none.
+
+        Otherwise answer with the ONE item from the LIST that matches, \
+        copied exactly.
+
+        Match the condition, not the words: any mention of wanting to die or \
+        self-harm is "suicidal"; a headache with a stiff neck and fever is \
+        "meningitis"; swallowing pills or chemicals is "overdose"; black or \
+        tarry stools are "black stool"; inhaling water is "drowning". Choose \
+        the emergency over a milder look-alike. Answer with the list item \
+        only — no explanation, no advice.
+        """
+    }
 
     /// Pass 2, and only when the name isn't already in the triage table: one
     /// word, to pick the safe default.
@@ -367,23 +382,25 @@ final class MLXEngine: LLMEngine {
                 var fallbackTopic: String?
                 var conversation = self.history + [userMessage]
                 do {
-                    // Curated text triage FIRST — two stages, general by
-                    // construction:
-                    // 1. Literal match of the user's words against the whole
-                    //    alias table (instant, free).
-                    // 2. If that misses, the model NAMES what's being
-                    //    described (tiny pass, the text twin of the photo
-                    //    naming pass — "a rattler tagged me" → "snake bite")
-                    //    and the table judges the name. The model never
-                    //    decides severity; it only translates phrasing into
-                    //    the table's vocabulary.
+                    // Curated text triage FIRST — the table is the authority:
+                    // 1. Match the user's OWN words against the whole alias
+                    //    table (instant, free). If anything matches — at any
+                    //    level — that verdict stands, banner or not. The
+                    //    worst literal match wins, so a serious cue is never
+                    //    masked by a benign one in the same sentence.
+                    // 2. ONLY when the words match nothing at all does the
+                    //    model name what's described, choosing from the
+                    //    table's own closed menu ("a rattler tagged me" →
+                    //    "snake bite"). The model fills gaps; it never
+                    //    overrules a match the table already made — a
+                    //    forced-choice 4B over-picks the scariest menu item,
+                    //    turning a nosebleed into "severe bleeding" and a
+                    //    concussion into "thunderclap headache" (harness,
+                    //    2026-07-11). The model translates phrasing; it never
+                    //    decides severity.
                     // Only urgent/soon banners, deduped across the chat.
                     var curated = TriageTable.textVerdict(prompt)
-                    if curated?.verdict != .urgent {
-                        // Run the naming stage unless the literal stage
-                        // already maxed out, and keep the WORSE of the two —
-                        // a sub-urgent literal match must not mask a worse
-                        // normalized one.
+                    if TriageTable.textMatch(prompt) == nil {
                         let named = (try? await self.ask(
                             instructions: Self.textNameInstructions, prompt: prompt,
                             maxTokens: 16, container: container)) ?? ""
@@ -391,8 +408,7 @@ final class MLXEngine: LLMEngine {
                         if named.range(of: "none", options: .caseInsensitive) == nil,
                             let name = TriageTable.sanitizeName(named)
                         {
-                            curated = TriageTable.worse(
-                                curated, TriageTable.findingVerdict(named: name))
+                            curated = TriageTable.findingVerdict(named: name)
                         }
                     }
                     if let curated,

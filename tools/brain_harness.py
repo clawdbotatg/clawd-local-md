@@ -66,7 +66,23 @@ def swift_string(anchor):
 
 
 FOLLOWUP_PROMPT = swift_string("private var followupInstructions: String {")
-TEXTNAME_PROMPT = swift_string("private static let textNameInstructions = ")
+
+
+def banner_vocabulary(entries):
+    """Mirror of TriageTable.bannerVocabulary — the closed menu the naming
+    pass picks from: primary name of every urgent/soon entry."""
+    return [e["names"][0] for e in entries
+            if triage.SEVERITY[e["level"]] >= triage.SEVERITY["soon"]]
+
+
+def textname_prompt(entries):
+    """The naming prompt with the table's own vocabulary injected, exactly as
+    MLXEngine builds it at run time."""
+    raw = swift_string("private static var textNameInstructions: String {")
+    return raw.replace(
+        '\\(TriageTable.bannerVocabulary.joined(separator: ", "))',
+        ", ".join(banner_vocabulary(entries)),
+    )
 
 
 # --- the corpus tools, mirroring CorpusTools.swift -------------------------
@@ -308,18 +324,19 @@ def run_turn(brain, entries, prompt, history, trace=print):
     fallback_topic = None
     conversation = list(history) + [{"role": "user", "content": prompt}]
 
-    # Stage 1: literal curated triage.
+    # Stage 1: literal curated triage — the table is the authority.
     level = triage.text_verdict(entries, prompt)
     note = None
-    if level:
-        entry = max(triage.all_matches(entries, prompt), key=lambda m: triage.SEVERITY[m["level"]])
-        note = entry["note"]
-    if level != "URGENT":
-        # Stage 2 unless stage 1 already maxed out: the model names, the
-        # table judges — and the WORSE of the two wins, so a sub-urgent
-        # literal match can't mask a worse normalized one.
+    match = triage.text_match(entries, prompt)
+    if match:
+        note = match["note"]
+    if match is None:
+        # Stage 2 ONLY when the words match nothing: the model names from the
+        # table's closed menu, the table judges. It fills gaps; it never
+        # overrules a match the table already made (a forced-choice 4B
+        # over-picks the scariest menu item).
         named = brain.generate(
-            [{"role": "system", "content": TEXTNAME_PROMPT},
+            [{"role": "system", "content": textname_prompt(entries)},
              {"role": "user", "content": prompt}],
             max_tokens=16,
         )
@@ -328,8 +345,7 @@ def run_turn(brain, entries, prompt, history, trace=print):
             name = triage.sanitize_name(named)
             if name:
                 result = triage.finding_verdict_entry(entries, name)
-                if result and (level is None
-                               or triage.SEVERITY[result[0].lower()] > triage.SEVERITY[level.lower()]):
+                if result:
                     level, note = result
     if level and not any(note in m.get("content", "") for m in history):
         banner = level

@@ -213,16 +213,25 @@ CASES = [
 ]
 
 
+def text_match(entries, text):
+    """Worst entry matching the user's typed words, at any level."""
+    matches = all_matches(entries, text)
+    return max(matches, key=lambda m: SEVERITY[m["level"]]) if matches else None
+
+
 def text_verdict(entries, text):
     """Mirrors TriageTable.textVerdict: curated triage over TYPED symptom
     text — fires only when the worst matching entry is urgent/soon."""
-    matches = all_matches(entries, text)
-    if not matches:
-        return None
-    worst = max(matches, key=lambda m: SEVERITY[m["level"]])
-    if SEVERITY[worst["level"]] < SEVERITY["soon"]:
+    worst = text_match(entries, text)
+    if not worst or SEVERITY[worst["level"]] < SEVERITY["soon"]:
         return None
     return worst["level"].upper()
+
+
+def text_matched(entries, text):
+    """Mirrors the engine's naming-pass trigger: True when the words match
+    ANY entry (so the model must not run and overrule the table)."""
+    return text_match(entries, text) is not None
 
 
 # (typed message, expected banner or None, why)
@@ -237,6 +246,15 @@ TEXT_CASES = [
     ("my balls hurt", None, "no curated match -> model + library path"),
     ("i have shingles near my eye", "URGENT", "urgent entries fire from text too"),
     ("my dog bit a hole in my shoe", None, "'dog bit me' must not fire on the shoe"),
+    ("i don't want to live anymore", "URGENT", "mental-health crisis fires literally -> 988"),
+    ("i've been thinking about suicide", "URGENT", "suicidal ideation literal match"),
+    ("my dad's face is drooping and his speech is slurred", "URGENT", "stroke FAST literal match"),
+    ("my friend is choking on food and can't talk", "URGENT", "choking literal match"),
+    ("i took too many pills", "URGENT", "overdose -> poison control"),
+    ("i splashed bleach in my eye", "URGENT", "eye chemical splash"),
+    ("burning when i pee and i keep having to go", "SOON", "UTI needs treatment"),
+    ("my nose won't stop bleeding", None, "nosebleed is routine — generic 'bleeding' alias must not escalate it"),
+    ("i cut my leg and it's gushing blood", "URGENT", "vivid severe-bleeding alias still fires"),
     ("sliced my hand open on my camp knife and it's gaping", "URGENT", "gaping = deep cut"),
     ("rolled my ankle and now i can't put any weight on it", "URGENT", "no-weight-bearing = possible fracture"),
     ("got snow glare all day and now my eyes are burning", "SOON", "photokeratitis"),
@@ -247,7 +265,6 @@ TEXT_CASES = [
 CATEGORY_WORDS = [
     ("burn", "burn"), ("scald", "burn"), ("bite", "bite"), ("sting", "bite"),
     ("wound", "wound"), ("laceration", "wound"), ("puncture", "wound"),
-    ("eye", "eye"),
 ]
 
 
@@ -297,6 +314,10 @@ FINDING_CASES = [
     ("airway obstruction", "URGENT", "normalizer phrasing for anaphylaxis"),
     ("waterborne illness", "SOON", "normalizer phrasing for giardia"),
     ("target-like rash", "URGENT", "normalizer phrasing for bullseye rash"),
+    ("infant fever", "URGENT", "naming pass carries '2 month old has a fever'"),
+    ("suicidal thoughts", "URGENT", "naming pass carries emotional-crisis phrasings -> 988"),
+    ("stroke", "URGENT", "FAST"),
+    ("choking", "URGENT", "airway"),
     ("testicle pain", None, "not in the table -> model + library path"),
     ("none", None, "the normalizer's no-event answer matches nothing"),
 ]

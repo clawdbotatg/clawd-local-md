@@ -101,21 +101,36 @@ when to be seen.
   symptom questions (with slang→medical translation: "balls hurt" →
   "testicle pain") — answer first, photo suggestion only for visible
   findings, never instead of answering.
-- **Text triage**: the photo pipeline's curated authority extended to
-  TYPED text, in the same two-stage shape — the model may NAME, only the
-  table JUDGES. Stage 1 (`TriageTable.textVerdict`): literal match of the
-  user's words against the whole alias table (instant; entries carry
-  natural phrasings like "bit by a snake"). Stage 2, on a miss: a tiny
-  text-naming pass (`textNameInstructions` — the text twin of the photo
-  naming pass) normalizes any phrasing to the table's vocabulary ("a
-  rattler tagged me" → "snake bite"), and `TriageTable.findingVerdict`
-  judges the name — with the photo pipeline's soon-on-miss posture for
-  unplaceable burn/bite/wound/sting/eye names. Stage 2 runs unless stage 1
-  already hit URGENT, and the WORSE of the two wins (`TriageTable.worse`) —
-  a sub-urgent literal match ("tick" → SOON) must not mask a worse
-  normalized one ("bullseye rash" → URGENT). Either way an URGENT/SOON hit
-  banners the curated verdict + note BEFORE the conversational turn
-  (deduped per chat; minor and unmatched messages stay conversational).
+- **Text triage — the table is the authority, the model only fills gaps.**
+  The photo pipeline's curated authority extended to TYPED text: the model
+  may NAME, only the table JUDGES.
+  **Stage 1 (`TriageTable.textMatch`/`textVerdict`)**: match the user's OWN
+  words against the whole alias table (instant; entries carry natural
+  phrasings like "bit by a snake"). If ANYTHING matches — at any level —
+  that verdict stands, banner or not. The *worst* literal match wins, so a
+  serious cue is never masked by a benign one in the same sentence.
+  **Stage 2 runs ONLY when the words match nothing at all**: the model picks
+  from `TriageTable.bannerVocabulary` — a **closed menu** of the primary name
+  of every urgent/soon entry, generated from the table itself (so new entries
+  join it automatically) — and `findingVerdict` judges the pick, with the
+  soon-on-miss posture for unplaceable burn/bite/wound/sting names.
+  Two hard-won rules, both from live-model runs (2026-07-11):
+  1. **Closed vocabulary, or it never converges.** Open-ended naming invented
+     a new correct synonym every run — "melena", then "upper GI bleed";
+     "ingestion poison", then "chemical ingestion" — and the alias list could
+     never catch up.
+  2. **The model may never overrule a literal match.** Handed a menu, a 4B
+     force-picks the scariest near-neighbor instead of saying none — a
+     nosebleed became "severe bleeding", a concussion "thunderclap headache".
+     So a literal match (even a benign one) suppresses the naming pass
+     entirely. That is why benign entries (scrape, plain sunburn, plant rash,
+     lightheadedness, flu, pulled muscle) matter as much as the emergencies:
+     they are what *stops* a false alarm.
+  An URGENT/SOON hit banners the curated verdict + note BEFORE the
+  conversational turn (deduped per chat; minor and unmatched messages stay
+  conversational). Known trade: a blistering sunburn matches the routine
+  `sunburn` entry and no longer banners SOON — a non-dangerous miss accepted
+  to keep false alarms at zero.
   The wilderness tier (heat stroke, hypothermia, chest pain, anaphylaxis,
   concussion, fractures, dislocations, altitude, seizures, mushroom
   ingestion, giardia, lightning, …) was added 2026-07-11 after the hiking
