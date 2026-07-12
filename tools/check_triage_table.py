@@ -213,9 +213,27 @@ CASES = [
 ]
 
 
+def lyme_escalation(entries, text):
+    """Mirrors TriageTable.lymeEscalation: a ring/target rash is ringworm on
+    its own but early Lyme when a tick is also mentioned — co-occurrence that
+    contiguous aliases cannot express."""
+    if not re.search(_pattern("tick"), text, re.I):
+        return None
+    ring = ["ring", "ring-shaped", "circular", "target", "bullseye", "bull's-eye", "expanding"]
+    rash = ["rash", "spot", "mark", "patch", "redness"]
+    if not any(re.search(_pattern(w), text, re.I) for w in ring):
+        return None
+    if not any(re.search(_pattern(w), text, re.I) for w in rash):
+        return None
+    return next((e for e in entries if e["names"][0] == "bullseye rash"), None)
+
+
 def text_match(entries, text):
     """Worst entry matching the user's typed words, at any level."""
     matches = all_matches(entries, text)
+    lyme = lyme_escalation(entries, text)
+    if lyme:
+        matches = matches + [lyme]
     return max(matches, key=lambda m: SEVERITY[m["level"]]) if matches else None
 
 
@@ -245,6 +263,11 @@ TEXT_CASES = [
     ("what is ringworm", None, "routine topics never banner a text chat"),
     ("my balls hurt", None, "no curated match -> model + library path"),
     ("i have shingles near my eye", "URGENT", "urgent entries fire from text too"),
+    ("i got a ring shaped rash a week after pulling a tick off me", "URGENT",
+     "tick + ring rash = early Lyme, must out-rank the tick-bite entry (SOON)"),
+    ("i have a ring shaped rash on my arm", None,
+     "a ring rash with NO tick is ordinary ringworm — must not false-alarm"),
+    ("i pulled a tick off my leg", "SOON", "a tick with no rash stays the tick-bite entry"),
     ("my dog bit a hole in my shoe", None, "'dog bit me' must not fire on the shoe"),
     ("i don't want to live anymore", "URGENT", "mental-health crisis fires literally -> 988"),
     ("i've been thinking about suicide", "URGENT", "suicidal ideation literal match"),

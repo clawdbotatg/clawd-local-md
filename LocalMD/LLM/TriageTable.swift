@@ -207,7 +207,27 @@ enum TriageTable {
     /// concussion "thunderclap headache" (harness, 2026-07-11). The table is
     /// the authority; the model only fills genuine gaps.
     static func textMatch(_ text: String) -> TriageEntry? {
-        allMatches(in: text).max(by: { severity($0.level) < severity($1.level) })
+        (allMatches(in: text) + [lymeEscalation(text)].compactMap { $0 })
+            .max(by: { severity($0.level) < severity($1.level) })
+    }
+
+    /// The one look-alike that contiguous aliases cannot express, and the most
+    /// important curated case in the app: a ring/target/expanding rash means
+    /// ordinary **ringworm** on its own, but early **Lyme** when a tick is also
+    /// mentioned — and the two sit at opposite ends of the severity scale.
+    /// Aliases match phrases, not co-occurrence, so "a ring shaped rash a week
+    /// after pulling a tick off me" matched only the tick-bite entry (SOON) and
+    /// the bullseye rash (URGENT) was masked (harness, 2026-07-11). Checked
+    /// explicitly, and deliberately narrow: it needs a tick AND a ring-ish word
+    /// AND a rash word.
+    private static func lymeEscalation(_ text: String) -> TriageEntry? {
+        guard contains(text, word: "tick") else { return nil }
+        let ringWords = ["ring", "ring-shaped", "circular", "target", "bullseye", "bull's-eye", "expanding"]
+        let rashWords = ["rash", "spot", "mark", "patch", "redness"]
+        guard ringWords.contains(where: { contains(text, word: $0) }),
+            rashWords.contains(where: { contains(text, word: $0) })
+        else { return nil }
+        return entries.first { $0.names.first == "bullseye rash" }
     }
 
     /// The closed vocabulary the text-naming pass chooses from: the primary
