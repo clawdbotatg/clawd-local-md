@@ -1,0 +1,54 @@
+[
+  {
+    "prompt": "i just got bit by a snake",
+    "banner": "URGENT",
+    "contains": ["911"],
+    "excludes": ["leave snakes alone", "watch your children"]
+  },
+  {
+    "prompt": "a rattler got me on the trail while hiking",
+    "banner": "URGENT",
+    "contains": ["911"]
+  },
+  {
+    "prompt": "my kid just grabbed a hot pan and her hand is blistering",
+    "banner": "SOON",
+    "contains": []
+  },
+  {
+    "prompt": "i stepped on a rusty nail",
+    "banner": "SOON",
+    "contains": ["tetanus"]
+  },
+  {
+    "prompt": "my balls hurt",
+    "banner": null,
+    "contains": ["medlineplus"],
+    "excludes": ["take a photo of your", "photograph"]
+  },
+  {
+    "prompt": "what is ringworm",
+    "banner": null,
+    "contains": ["fungal"]
+  },
+  {
+    "prompt": "can i take ibuprofen with tylenol",
+    "banner": null,
+    "contains": []
+  },
+  {
+    "prompt": "my dog bit a hole in my shoe",
+    "banner": null,
+    "excludes": ["VERDICT"]
+  },
+  {
+    "prompt": "i have a headache that came on suddenly and its the worst of my life",
+    "banner": null,
+    "contains": ["care"]
+  },
+  {
+    "prompt": "whats the weather like",
+    "banner": null,
+    "excludes": ["VERDICT"]
+  }
+]

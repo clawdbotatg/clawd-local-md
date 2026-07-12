@@ -240,14 +240,37 @@ TEXT_CASES = [
 ]
 
 
-def finding_verdict(entries, name):
+CATEGORY_WORDS = [
+    ("burn", "burn"), ("scald", "burn"), ("bite", "bite"), ("sting", "bite"),
+    ("wound", "wound"), ("laceration", "wound"), ("puncture", "wound"),
+]
+
+
+def finding_verdict_entry(entries, name):
     """Mirrors TriageTable.findingVerdict: the model normalizes free text to
     a finding name ('a rattler tagged me' -> 'snake bite'); the table judges
-    the name — urgent/soon banners, everything else stays conversational."""
+    the name — urgent/soon banners, everything else stays conversational.
+    An unmatched burn/bite/wound name falls to the soon-on-miss default,
+    same posture as the photo pipeline. Returns (LEVEL, note) or None."""
     best = lookup(entries, name)
-    if not best or SEVERITY[best["level"]] < SEVERITY["soon"]:
-        return None
-    return best["level"].upper()
+    if best:
+        if SEVERITY[best["level"]] < SEVERITY["soon"]:
+            return None
+        return best["level"].upper(), best["note"]
+    lower = name.lower()
+    for word, category in CATEGORY_WORDS:
+        if word in lower:
+            return "SOON", (
+                f"I can't match this exactly in my curated list — and with a {category} "
+                "finding, that's a reason to be seen, not reassured. Have a clinician "
+                "look at it in the next day or two, sooner if it's getting worse."
+            )
+    return None
+
+
+def finding_verdict(entries, name):
+    result = finding_verdict_entry(entries, name)
+    return result[0] if result else None
 
 
 # (normalized name from the model, expected banner or None, why)
@@ -257,8 +280,11 @@ FINDING_CASES = [
     ("deep cut", "URGENT", "stitches are time-limited"),
     ("dog bite", "URGENT", "same-day care"),
     ("tick bite", "SOON", "soon tier banners too"),
+    ("thermal burn", "SOON", "unmatched burn name -> soon-on-miss, like photos"),
+    ("scald", "SOON", "unmatched burn synonym -> soon-on-miss"),
+    ("nail injury", None, "not a wound word — conversational path handles it"),
     ("ringworm", None, "routine findings never banner a text chat"),
-    ("sunburn", None, "routine"),
+    ("sunburn", None, "sunburn is routine — the burn fallback must not out-rank a real match"),
     ("testicle pain", None, "not in the table -> model + library path"),
     ("none", None, "the normalizer's no-event answer matches nothing"),
 ]

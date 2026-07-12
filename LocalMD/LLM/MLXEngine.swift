@@ -74,8 +74,8 @@ final class MLXEngine: LLMEngine {
         event or finding happening to them or someone with them — an \
         injury, a bite, a burn, a symptom, something on their body — answer \
         with its short common medical name only. Two to four words, no \
-        sentence. Like: snake bite. Or: chemical burn. Or: deep cut. Or: \
-        testicle pain.
+        sentence. Like: snake bite. Or: chemical burn. Or: puncture wound. \
+        Or: testicle pain.
 
         If it is a general knowledge question, a follow-up about earlier \
         advice, or not about a health event, answer exactly: none

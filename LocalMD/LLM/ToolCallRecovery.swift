@@ -192,9 +192,9 @@ enum ToolCallRecovery {
             ?? (call.function.arguments["title"]?.anyValue as? String)
         switch call.function.name {
         case "search_health_topics":
-            return "🔎 Searching the medical library\(subject.map { " — \($0)" } ?? "")…"
+            return "🔎 Searching MedlinePlus\(subject.map { " — \($0)" } ?? "")…"
         case "get_health_topic":
-            return "📖 Reading\(subject.map { ": \($0)" } ?? " the topic")…"
+            return "📖 Reading MedlinePlus\(subject.map { ": \($0)" } ?? "")…"
         default:
             return "⚙️ Using \(call.function.name)…"
         }

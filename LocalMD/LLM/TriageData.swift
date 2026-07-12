@@ -257,7 +257,7 @@ extension TriageTable {
          "category":"wound","level":"urgent","source":"Mayo Clinic",
          "note":"A cut whose edges gape open, shows fat or muscle, or won't stop bleeding needs closing — and stitches or glue work best within hours, so go now, not tomorrow. Keep firm pressure on it on the way. Cuts over joints, on the face, or from something dirty or rusty especially need professional care."},
 
-        {"names":["puncture wound","stepped on a nail"],
+        {"names":["puncture wound","stepped on a nail","rusty nail","stepped on a rusty nail","nail went through"],
          "category":"wound","level":"soon","source":"Mayo Clinic",
          "note":"Punctures look small but seal bacteria deep inside, so they infect easily. Let it bleed a little, wash well, and see a clinician in the next day — especially for a nail through a shoe, an animal-tooth puncture, anything deep or dirty, or if your tetanus shot isn't current. Watch closely for spreading redness, warmth, or pus."},
 

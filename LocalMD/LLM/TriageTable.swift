@@ -205,9 +205,25 @@ enum TriageTable {
     /// looked up here. Same gate: only urgent/soon banners. The model names,
     /// the table judges — severity never comes from the model.
     static func findingVerdict(named name: String) -> VerdictResult? {
-        guard let entry = lookup(name: name), severity(entry.level) >= severity("soon")
+        if let entry = lookup(name: name) {
+            guard severity(entry.level) >= severity("soon") else { return nil }
+            return compose(uiVerdict(entry.level), entry.note)
+        }
+        // The photo pipeline's soon-on-miss posture, for text: the model
+        // named something the table can't place ("thermal burn"), but the
+        // name itself says it's a burn/bite/wound — and an unplaceable one
+        // of those is a reason to be seen, not to chat.
+        let lower = name.lowercased()
+        let categoryWords = [
+            ("burn", "burn"), ("scald", "burn"), ("bite", "bite"), ("sting", "bite"),
+            ("wound", "wound"), ("laceration", "wound"), ("puncture", "wound"),
+        ]
+        guard let (_, category) = categoryWords.first(where: { lower.contains($0.0) })
         else { return nil }
-        return compose(uiVerdict(entry.level), entry.note)
+        return compose(
+            .soon,
+            "I can't match this exactly in my curated list — and with a \(category) finding, that's a reason to be seen, not reassured. Have a clinician look at it in the next day or two, sooner if it's getting worse."
+        )
     }
 
     private static func compose(_ verdict: ChatMessage.Verdict, _ note: String) -> VerdictResult {

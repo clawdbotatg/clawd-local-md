@@ -133,6 +133,20 @@ when to be seen.
   `xcrun devicectl device process launch --terminate-existing
   --environment-variables '{"LMD_ASK":"my balls hurt"}' --device <udid>
   com.clawd.localmd`, then `tools/pulllog.sh` shows the tool-call trace.
+- **Iterate on the brain LOCALLY first — `tools/brain_harness.py`.** This
+  Mac runs the phone's exact weights via mlx-vlm (`build/brainenv` venv;
+  `/opt/homebrew/bin/python3.12 -m venv build/brainenv && …/pip install
+  mlx-vlm`). The harness extracts the system prompts from MLXEngine.swift
+  at run time (they cannot drift), mirrors the full turn loop (two-stage
+  text triage via check_triage_table.py, corpus tools over the bundled DB,
+  tool-call recovery, library fallback, same sampling), and runs `--ask`
+  one-shots with a full trace, `--repl` chat, or the `--suite
+  tools/brain_suite.json` battery (real-model behavioral cases: banners,
+  must-contain, must-not-contain). Prompt/corpus changes go: edit Swift →
+  run the suite here → only then build for the device. It found in one run
+  what three device round-trips hadn't: normalizer names that miss the
+  table ("thermal burn") — now covered by findingVerdict's category
+  fallback — and phrase gaps like "stepped on a RUSTY nail".
 - Everything else (Brain switcher via `BrainCatalog`, offline-only tools
   `get_location` + `get_device_status`, fresh-ChatSession-per-turn) is
   inherited unchanged — see the parent's CLAUDE.md notes below.
