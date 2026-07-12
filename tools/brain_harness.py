@@ -66,6 +66,8 @@ def swift_string(anchor):
 
 
 FOLLOWUP_PROMPT = swift_string("private var followupInstructions: String {")
+NAME_PROMPT = swift_string("private static let nameInstructions = ")
+CATEGORY_PROMPT = swift_string("private static let categoryInstructions = ")
 
 
 def banner_vocabulary(entries):
@@ -315,6 +317,27 @@ class Brain:
         text = result.text if hasattr(result, "text") else result
         return re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
 
+    def look(self, image_path, instructions, user_prompt, max_tokens):
+        """One tool-free, history-free question against a PHOTO — the mirror of
+        MLXEngine.ask(instructions:prompt:image:)."""
+        from mlx_vlm import generate
+        from mlx_vlm.prompt_utils import apply_chat_template
+
+        prompt = apply_chat_template(
+            self.processor, self.model.config,
+            [{"role": "system", "content": instructions},
+             {"role": "user", "content": user_prompt}],
+            num_images=1,
+        )
+        result = generate(
+            self.model, self.processor, prompt, image=[image_path],
+            max_tokens=max_tokens, temperature=0.7, top_p=0.8,
+            repetition_penalty=1.15, repetition_context_size=64,
+            verbose=False,
+        )
+        text = result.text if hasattr(result, "text") else result
+        return re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
+
 
 def run_turn(brain, entries, prompt, history, trace=print):
     """Mirror of MLXEngine.followUp: two-stage triage, rounds with recovery,
@@ -393,8 +416,66 @@ def run_turn(brain, entries, prompt, history, trace=print):
     return visible.strip(), banner
 
 
+def run_photo(brain, entries, image_path, trace=print):
+    """Mirror of MLXEngine.identify(): name pass -> (category pass only if the
+    name is unknown) -> TriageTable.verdict. The model is the eyes; the table
+    is the encyclopedia. Returns (raw_name, verdict)."""
+    reply = brain.look(image_path, NAME_PROMPT, "What is this?", max_tokens=32)
+    trace(f"  [name] {reply!r}")
+
+    if re.search("not a body part", reply, re.I):
+        return reply, "NONE"
+
+    name = triage.sanitize_name(reply)
+    category = None
+    if name and triage.lookup(entries, name) is None:
+        raw = brain.look(
+            image_path, CATEGORY_PROMPT,
+            f"This looks like: {name}. Which one word describes it?", max_tokens=8)
+        word = re.sub(r"[^a-z]", "", raw.strip().split("\n")[0].lower())
+        category = word if word in triage.CATEGORIES else None
+        trace(f"  [category] {raw!r} -> {category}")
+
+    return reply, triage.verdict(entries, name, category, triage.is_hedged(reply))
+
+
+def photo_suite(brain, entries, path):
+    cases = json.loads(Path(path).read_text())
+    photos = ROOT / "build" / "photos"
+    failures = 0
+    for case in cases:
+        image = photos / case["file"]
+        if not image.exists():
+            sys.exit(f"missing {image} — run: python3 tools/fetch_photos.py")
+        print(f"\n### {case['file']}  ({case['why']})")
+        raw, got = run_photo(brain, entries, str(image))
+        problems = []
+
+        wanted = case.get("verdict_any") or ([case["verdict"]] if "verdict" in case else None)
+        if wanted and got not in wanted:
+            problems.append(f"verdict {got} not in {wanted}")
+        if case.get("not_a_body") and got != "NONE":
+            problems.append("a landscape must be refused, not triaged")
+        # The name only has to land somewhere the table can use — the point is
+        # the VERDICT, which is what the user acts on.
+        if case.get("name_any") and not any(
+            word in raw.lower() for word in case["name_any"]
+        ):
+            problems.append(f"name {raw!r} matched none of {case['name_any']}")
+
+        if problems:
+            failures += 1
+            print(f"  FAIL: {'; '.join(problems)}")
+        else:
+            print(f"  ok   {got}")
+    print(f"\n{'ALL PASS' if not failures else f'{failures} FAILURE(S)'}")
+    sys.exit(1 if failures else 0)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--photos", nargs="?", const="tools/photo_suite.json",
+                        help="run the PHOTO battery (real clinical images)")
     parser.add_argument("--ask", help="one question, full trace")
     parser.add_argument("--repl", action="store_true", help="interactive chat")
     parser.add_argument("--suite", help="JSON test battery to run")
@@ -402,6 +483,10 @@ def main():
 
     entries = triage.load_entries()
     brain = Brain()
+
+    if args.photos:
+        photo_suite(brain, entries, args.photos)
+        return
 
     if args.ask:
         text, banner = run_turn(brain, entries, args.ask, [])

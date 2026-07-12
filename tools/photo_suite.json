@@ -1,0 +1,72 @@
+[
+  {
+    "file": "bullseye.jpg",
+    "commons": "File:Bullseye rash linked to Lyme disease.jpg",
+    "why": "the flagship curated case — early Lyme, where waiting is the mistake",
+    "verdict": "URGENT",
+    "name_any": ["bullseye", "lyme", "erythema migrans", "target", "ring"]
+  },
+  {
+    "file": "ringworm.jpg",
+    "commons": "File:Ringworm on the arm, or tinea corporis due to Trichophyton mentagrophytes PHIL 2938 lores.jpg",
+    "why": "the look-alike of the flagship case — a ring rash that is NOT Lyme",
+    "verdict": "ROUTINE",
+    "name_any": ["ringworm", "tinea", "fungal", "ring"]
+  },
+  {
+    "file": "cellulitis.jpg",
+    "commons": "File:కాలిలో కణతాపము (Cellulitis of leg).jpeg",
+    "why": "spreading bacterial infection — same-day care",
+    "verdict": "URGENT",
+    "name_any": ["cellulitis", "infection", "redness", "swelling", "swollen"]
+  },
+  {
+    "file": "shingles.jpg",
+    "commons": "File:Shingles on the chest.jpg",
+    "why": "the 72-hour antiviral window",
+    "verdict": "URGENT",
+    "name_any": ["shingles", "zoster", "blister", "band", "rash"]
+  },
+  {
+    "file": "melanoma.jpg",
+    "commons": "File:Malignant Melanoma in situ Left Forearm.jpg",
+    "why": "the mushroom rule of dermatology — a photo can never rule this out",
+    "verdict_any": ["URGENT", "SOON", "WATCH"],
+    "name_any": ["melanoma", "mole", "spot", "lesion", "pigment", "dark"]
+  },
+  {
+    "file": "poisonivy.jpg",
+    "commons": "File:Urushiol-induced contact dermatitis 7 days after contact.jpg",
+    "why": "common, self-care, must not over-alarm",
+    "verdict_any": ["ROUTINE", "WATCH"],
+    "name_any": ["poison ivy", "contact dermatitis", "rash", "blister"]
+  },
+  {
+    "file": "burn2nd.jpg",
+    "commons": "File:Second degree burn after 2 days.JPG",
+    "why": "blistering burn — partial thickness, needs to be seen",
+    "verdict_any": ["URGENT", "SOON"],
+    "name_any": ["burn", "blister"]
+  },
+  {
+    "file": "hives.jpg",
+    "commons": "File:Hives urticaria.jpg",
+    "why": "benign-but-watch, with the anaphylaxis escalation in its note",
+    "verdict_any": ["WATCH", "SOON"],
+    "name_any": ["hives", "urticaria", "welt", "rash"]
+  },
+  {
+    "file": "stye.jpg",
+    "commons": "File:Hordeolum.JPG",
+    "why": "an eye finding that is genuinely minor — the eye category must not auto-alarm",
+    "verdict_any": ["ROUTINE", "WATCH", "SOON"],
+    "name_any": ["stye", "hordeolum", "eyelid", "eye", "bump", "swelling"]
+  },
+  {
+    "file": "notabody.jpg",
+    "commons": "File:Zagedan Lakes, Mountain cirque, Caucasus Mountains.jpg",
+    "why": "control: a landscape must be refused, not triaged",
+    "verdict": "NONE",
+    "not_a_body": true
+  }
+]

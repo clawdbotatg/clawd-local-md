@@ -118,6 +118,12 @@ def verdict(entries, name, category=None, hedged=False):
             return "WATCH"
         if hedged and best["level"] == "routine":
             return "WATCH"
+        # A PHOTO IS NEVER AN ALL-CLEAR: the model names conditions badly on
+        # real photographs (a Lyme bullseye came back "Insect bite" -> ROUTINE),
+        # and the table cannot rescue a confidently wrong name. Photo matches
+        # are floored at WATCH; the self-care note still prints.
+        if best["level"] == "routine":
+            return "WATCH"
         return best["level"].upper()
     if category in SOON_ON_MISS:
         return "SOON"
@@ -151,17 +157,17 @@ CASES = [
     ("Changing mole", None, "SOON", "change is the key ABCDE feature"),
 
     # Specificity beats severity (the wolf-spider lesson, medical edition).
-    ("Fever blister", None, "ROUTINE", "a cold sore must not hit the blister entries"),
-    ("Blood blister", None, "ROUTINE", "specific blister entry wins"),
-    ("Cold sore", None, "ROUTINE", "harmless and common"),
+    ("Fever blister", None, "WATCH", "a cold sore must not hit the blister entries"),
+    ("Blood blister", None, "WATCH", "specific blister entry wins"),
+    ("Cold sore", None, "WATCH", "harmless and common"),
     ("Blistering burn", None, "SOON", "burn with blisters is at least partial thickness"),
-    ("Pimple with pus", None, "ROUTINE", "'pimple' (acne) must out-rank bare 'pus'"),
-    ("Cystic acne", None, "ROUTINE", "'cystic acne' must not hit the 'cyst' entry"),
+    ("Pimple with pus", None, "WATCH", "'pimple' (acne) must out-rank bare 'pus'"),
+    ("Cystic acne", None, "WATCH", "'cystic acne' must not hit the 'cyst' entry"),
 
     # Look-alike escalation: alternatives resolve to the worse level.
     ("Cold sore or impetigo", None, "SOON", "routine + soon alternatives -> soon"),
     ("Hives or cellulitis", None, "URGENT", "watch + urgent alternatives -> urgent"),
-    ("Ringworm or eczema", None, "ROUTINE", "same-level alternatives don't escalate"),
+    ("Ringworm or eczema", None, "WATCH", "same-level alternatives don't escalate"),
 
     # Hedging: downgrades ROUTINE, never rescues a serious match.
     ("Ringworm (uncertain)", None, "WATCH", "a hedged ROUTINE is downgraded"),
@@ -175,9 +181,9 @@ CASES = [
 
     # Plural tolerance.
     ("Hives", None, "WATCH", "plural alias must match"),
-    ("Styes", None, "ROUTINE", "plural of stye"),
-    ("Bed bug bites", None, "ROUTINE", "plural of a multi-word alias"),
-    ("Mosquito bites", None, "ROUTINE", "plural bite alias"),
+    ("Styes", None, "WATCH", "plural of stye"),
+    ("Bed bug bites", None, "WATCH", "plural of a multi-word alias"),
+    ("Mosquito bites", None, "WATCH", "plural bite alias"),
 
     # The urgent tier: things where waiting is the mistake.
     ("Bullseye rash", None, "URGENT", "early Lyme — the whole reason for curation"),
@@ -201,15 +207,15 @@ CASES = [
     ("Oral thrush", None, "SOON", "needs antifungals and a why"),
 
     # The routine tier still ends with escalation triggers in its notes.
-    ("Ringworm", None, "ROUTINE", "OTC antifungal territory"),
-    ("Sunburn", None, "ROUTINE", "self-care"),
-    ("Canker sore", None, "ROUTINE", "heals within two weeks"),
-    ("Dandruff", None, "ROUTINE", "medicated shampoo"),
-    ("Minor cut", None, "ROUTINE", "clean and cover"),
-    ("Skin tag", None, "ROUTINE", "growth category is allowed routine"),
+    ("Ringworm", None, "WATCH", "OTC antifungal territory"),
+    ("Sunburn", None, "WATCH", "self-care"),
+    ("Canker sore", None, "WATCH", "heals within two weeks"),
+    ("Dandruff", None, "WATCH", "medicated shampoo"),
+    ("Minor cut", None, "WATCH", "clean and cover"),
+    ("Skin tag", None, "WATCH", "growth category is allowed routine"),
 
     # A matched entry keys off its own category, not the pass-2 guess.
-    ("Stye", "rash", "ROUTINE", "matched entry wins over a wrong category pass"),
+    ("Stye", "rash", "WATCH", "matched entry wins over a wrong category pass"),
 ]
 
 

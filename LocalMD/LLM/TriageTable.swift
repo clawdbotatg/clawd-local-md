@@ -84,6 +84,11 @@ enum TriageTable {
 
     /// Appended whenever the mole floor fires: the one self-check worth
     /// teaching, verbatim from dermatology guidance.
+    /// Rides along with every photo match that would otherwise read "usually
+    /// minor" — see the floor in `verdict`.
+    private static let photoCaveat =
+        " But a photo can't confirm this: the on-device model reads appearance, not diagnosis, and serious conditions can look like minor ones. Treat this as a first look, not an all-clear — if it spreads, changes, worsens, or you feel unwell, have a clinician see it."
+
     private static let abcde =
         " A photo can never rule out skin cancer. Check ABCDE — Asymmetry, uneven Border, more than one Color, Diameter over 6 mm, Evolving — and show a clinician anything new, changing, or that looks different from your other spots."
 
@@ -163,6 +168,17 @@ enum TriageTable {
                     .watch,
                     "The model isn't confident about what this is. It resembles \(best.names[0]), which is usually minor — but that's not certain enough to lean on. If it doesn't clearly improve in a few days, or it worsens at all, have a clinician look at it."
                 )
+            }
+            // A PHOTO IS NEVER AN ALL-CLEAR. Measured against real clinical
+            // photographs, the model names appearance well but conditions
+            // badly: it called shingles "Red rash", cellulitis "Red leg
+            // swelling", and a Lyme bullseye "Insect bite" — which resolved
+            // to ROUTINE, "usually minor" (photo battery, 2026-07-11). The
+            // table cannot rescue a confidently wrong name, so a photo match
+            // is floored at WATCH: the self-care note still prints, but the
+            // banner never claims minor on evidence the model can't supply.
+            if best.level == "routine" {
+                return compose(.watch, best.note + photoCaveat)
             }
             return compose(uiVerdict(best.level), best.note)
         }
