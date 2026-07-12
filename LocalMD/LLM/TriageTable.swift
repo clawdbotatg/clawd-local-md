@@ -198,6 +198,18 @@ enum TriageTable {
         return compose(uiVerdict(worst.level), worst.note)
     }
 
+    /// Verdict for a NORMALIZED finding name — the text pipeline's general
+    /// path. `textVerdict` is the zero-latency literal matcher; when it
+    /// misses, the engine asks the model to *name* what the user is
+    /// describing ("a rattler tagged me" → "snake bite") and that name is
+    /// looked up here. Same gate: only urgent/soon banners. The model names,
+    /// the table judges — severity never comes from the model.
+    static func findingVerdict(named name: String) -> VerdictResult? {
+        guard let entry = lookup(name: name), severity(entry.level) >= severity("soon")
+        else { return nil }
+        return compose(uiVerdict(entry.level), entry.note)
+    }
+
     private static func compose(_ verdict: ChatMessage.Verdict, _ note: String) -> VerdictResult {
         let label =
             switch verdict {

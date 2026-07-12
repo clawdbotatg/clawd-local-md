@@ -65,6 +65,23 @@ final class MLXEngine: LLMEngine {
         Never say whether it is serious or harmless, and never give advice.
         """
 
+    /// Text turns get the same two-stage shape as photos: this tiny pass
+    /// only NAMES what the user is describing — in the vocabulary the
+    /// triage table speaks — and `TriageTable` judges it. It must never
+    /// assess severity itself.
+    private static let textNameInstructions = """
+        The user typed a message to a health app. If it describes a health \
+        event or finding happening to them or someone with them — an \
+        injury, a bite, a burn, a symptom, something on their body — answer \
+        with its short common medical name only. Two to four words, no \
+        sentence. Like: snake bite. Or: chemical burn. Or: deep cut. Or: \
+        testicle pain.
+
+        If it is a general knowledge question, a follow-up about earlier \
+        advice, or not about a health event, answer exactly: none
+        Never add explanation or advice.
+        """
+
     /// Pass 2, and only when the name isn't already in the triage table: one
     /// word, to pick the safe default.
     private static let categoryInstructions = """
@@ -311,13 +328,14 @@ final class MLXEngine: LLMEngine {
         return word.flatMap { TriageTable.categories.contains($0) ? $0 : nil }
     }
 
-    /// Run one short, tool-free, history-free question against the photo.
+    /// Run one short, tool-free, history-free question — against the photo
+    /// for the identification passes, or text-only for the naming pass.
     private func ask(
-        instructions: String, prompt: String, image: CIImage, maxTokens: Int,
+        instructions: String, prompt: String, image: CIImage? = nil, maxTokens: Int,
         container: ModelContainer
     ) async throws -> String {
         let session = makeSession(container, instructions: instructions, maxTokens: maxTokens)
-        let message = Chat.Message.user(prompt, images: [.ciImage(image)])
+        let message = Chat.Message.user(prompt, images: image.map { [.ciImage($0)] } ?? [])
         var raw = ""
         for try await chunk in session.streamResponse(to: [message]) { raw += chunk }
         return Self.stripThinking(raw)
@@ -348,14 +366,30 @@ final class MLXEngine: LLMEngine {
                 var fallbackTopic: String?
                 var conversation = self.history + [userMessage]
                 do {
-                    // Curated text triage FIRST: an urgent/soon match on the
-                    // user's own words ("bit by a snake") renders the same
-                    // authoritative verdict a photo would — instantly, from
-                    // TriageData, before the model says anything. The model
-                    // then continues with the verdict in its context.
-                    // Deduped so a follow-up mentioning the same finding
-                    // doesn't re-banner.
-                    if let curated = TriageTable.textVerdict(prompt),
+                    // Curated text triage FIRST — two stages, general by
+                    // construction:
+                    // 1. Literal match of the user's words against the whole
+                    //    alias table (instant, free).
+                    // 2. If that misses, the model NAMES what's being
+                    //    described (tiny pass, the text twin of the photo
+                    //    naming pass — "a rattler tagged me" → "snake bite")
+                    //    and the table judges the name. The model never
+                    //    decides severity; it only translates phrasing into
+                    //    the table's vocabulary.
+                    // Only urgent/soon banners, deduped across the chat.
+                    var curated = TriageTable.textVerdict(prompt)
+                    if curated == nil {
+                        let named = (try? await self.ask(
+                            instructions: Self.textNameInstructions, prompt: prompt,
+                            maxTokens: 16, container: container)) ?? ""
+                        DebugLog.log("text-name pass: \(named.debugDescription)")
+                        if named.range(of: "none", options: .caseInsensitive) == nil,
+                            let name = TriageTable.sanitizeName(named)
+                        {
+                            curated = TriageTable.findingVerdict(named: name)
+                        }
+                    }
+                    if let curated,
                         !self.history.contains(where: { $0.content.contains(curated.text) })
                     {
                         let lead = curated.text + "\n\n"

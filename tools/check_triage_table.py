@@ -240,6 +240,30 @@ TEXT_CASES = [
 ]
 
 
+def finding_verdict(entries, name):
+    """Mirrors TriageTable.findingVerdict: the model normalizes free text to
+    a finding name ('a rattler tagged me' -> 'snake bite'); the table judges
+    the name — urgent/soon banners, everything else stays conversational."""
+    best = lookup(entries, name)
+    if not best or SEVERITY[best["level"]] < SEVERITY["soon"]:
+        return None
+    return best["level"].upper()
+
+
+# (normalized name from the model, expected banner or None, why)
+FINDING_CASES = [
+    ("snake bite", "URGENT", "any snakebite phrasing normalizes here"),
+    ("chemical burn", "URGENT", "rinse + poison control, now"),
+    ("deep cut", "URGENT", "stitches are time-limited"),
+    ("dog bite", "URGENT", "same-day care"),
+    ("tick bite", "SOON", "soon tier banners too"),
+    ("ringworm", None, "routine findings never banner a text chat"),
+    ("sunburn", None, "routine"),
+    ("testicle pain", None, "not in the table -> model + library path"),
+    ("none", None, "the normalizer's no-event answer matches nothing"),
+]
+
+
 def main():
     entries = load_entries()
     print(f"{len(entries)} entries decode OK")
@@ -286,6 +310,15 @@ def main():
         ok = got == want
         failures += not ok
         print(f"  {'ok  ' if ok else 'FAIL'} {str(got):8} text: {text!r}")
+        if not ok:
+            print(f"       wanted {want} ({why})")
+
+    print()
+    for name, want, why in FINDING_CASES:
+        got = finding_verdict(entries, name)
+        ok = got == want
+        failures += not ok
+        print(f"  {'ok  ' if ok else 'FAIL'} {str(got):8} finding: {name!r}")
         if not ok:
             print(f"       wanted {want} ({why})")
 
